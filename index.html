@@ -12,7 +12,7 @@
                 <button class=""><img class="photo"
                         src="ma.jpg"></button></a>
         </div>
-        <div id="android_btn">
+        <div id="android_btn2">
             <a href="intent://arvr.google.com/scene-viewer/1.0?file=https://jahcom64.github.io/ar-pages/mb.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://jahcom64.github.io/ar-pages/mb.glb;end;">
                 <button class=""><img class="photo"
                         src="mb.jpg"></button></a>
@@ -24,7 +24,7 @@
                         src="ma.jpg"></button>
             </a>
         </div>
-        <div id="ios_btn">
+        <div id="ios_btn2">
             <a rel="ar" id="ar-link" href="mb.usdz"><img class="" src=""
                     alt=""><button class=""><img class="photo"
                         src="mb.jpg"></button>
@@ -72,7 +72,9 @@
                 isQQApp = ua.match(/QQ/i) == "qq",
                 isweiboApp = ua.match(/WeiBo/i) == "weibo";
             document.getElementById("ios_btn").style.display = "none";
+            document.getElementById("ios_btn2").style.display = "none";
             document.getElementById("android_btn").style.display = "none";
+            document.getElementById("android_btn2").style.display = "none";
             document.getElementById("desk_btn").style.display = "none";
             document.getElementById("inAPP_btn").style.display = "none";
 
@@ -81,8 +83,10 @@
             }
             else if (/(iPhone|iPad|iPod|iOS&&!safari)/i.test(ua)) {
                 document.getElementById("ios_btn").style.display = "";
+                document.getElementById("ios_btn2").style.display = "";
             } else if (/(Android)/i.test(ua)) {
                 document.getElementById("android_btn").style.display = "";
+                document.getElementById("android_btn2").style.display = "";
             } else {
                 document.getElementById("desk_btn").style.display = "";
             };
