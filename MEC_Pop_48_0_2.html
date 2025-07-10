@@ -1,0 +1,606 @@
+<!doctype html>
+
+<html>
+
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>微電車AR</title>
+
+    <meta
+        name="keywords"
+        content="AR,PopReal,微電車,彰化監理站"
+    >
+
+    <meta
+        property="og:type"
+        content="website"
+    >
+
+    <meta
+        property="og:title"
+        content="微電車AR"
+    >
+
+    <meta
+        property="og:site_name"
+        content="微電車AR"
+    >
+
+    <meta
+        property="og:url"
+        content="https://jucheng161.github.io/MEC_Pop_48_0_2.html?openExternalBrowser=1"
+    >
+
+    <meta
+        property="og:image:width"
+        content="500"
+    >
+
+    <meta
+        property="og:image:height"
+        content="500"
+    >
+
+    <meta
+        property="og:image"
+        content="https://jucheng161.github.io/clickIMG/跳轉畫面_左轉未依規定.png"
+    >
+
+    <meta
+        property="og:description"
+        content="點擊體驗 PopRealAR"
+    />
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined"
+        rel="stylesheet"
+    >
+
+    <style type="text/css">
+        @import url('https://fonts.googleapis.com/css?family=Noto+Sans+TC&display=swap');
+
+
+
+        * {
+
+            -webkit-text-size-adjust: 100%;
+
+            text-size-adjust: 100%;
+
+            margin: 0;
+
+            padding: 0;
+
+            /*overflow-x: hidden;
+
+            outline: solid #f00 1px !important;*/
+
+        }
+
+
+
+
+
+        body,
+
+        html {
+
+            font-family: 'Noto Sans TC', sans-serif;
+
+            justify-content: center;
+
+            margin: 0px;
+
+            padding: 0px;
+
+            background-color: #202322;
+
+            font-size: 16px;
+
+            letter-spacing: 0.15rem;
+
+        }
+
+
+
+        h1,
+
+        h1 a {
+
+            font-size: 1.2rem;
+
+            line-height: 2rem;
+
+            color: #fff;
+
+        }
+
+
+
+
+
+        .pjcit,
+
+        .pjcit a {
+
+            font-size: 0.95rem;
+
+            margin: 1rem 0 0.5rem;
+
+            color: #aaa;
+
+        }
+
+
+
+        .pjcit a:hover {
+
+            color: #fff;
+
+        }
+
+
+
+        button {
+
+            border: none;
+
+            background: none;
+
+        }
+
+
+
+
+
+        .page_popreal {
+
+            position: relative;
+
+            text-align: center;
+
+            display: block;
+
+            z-index: 2;
+
+        }
+
+
+
+
+
+        .page_popreal button {
+
+            align-items: center;
+
+            font-size: 1.2rem;
+
+            font-weight: 900;
+
+            letter-spacing: 2px;
+
+        }
+
+
+
+
+
+        .photo {
+
+            width: 91vmin;
+
+            height: auto;
+
+            z-index: 1;
+
+        }
+
+
+
+        .modal-window {
+
+            position: fixed;
+
+            background-color: rgba(1, 1, 1, 0.15);
+
+            top: 0;
+
+            right: 0;
+
+            bottom: 0;
+
+            left: 0;
+
+            z-index: 999;
+
+            opacity: 0;
+
+            pointer-events: none;
+
+            -webkit-transition: all 0.3s;
+
+            -moz-transition: all 0.3s;
+
+            transition: all 0.3s;
+
+            font-size: x-large;
+
+        }
+
+
+
+        .modal-window:target {
+
+            opacity: 1;
+
+            pointer-events: auto;
+
+        }
+
+
+
+        .modal-window>div {
+
+            width: 50vw;
+
+            position: relative;
+
+            margin: 1% auto;
+
+            padding: 1.125rem;
+
+            background: #fff;
+
+            border-radius: 50px;
+
+        }
+
+
+
+        .photoqr {
+
+            max-height: 300px;
+
+        }
+
+
+
+        .inAPP>div {
+
+            width: 80vw;
+
+            font-size: 2rem;
+
+            line-height: 3rem;
+
+        }
+
+
+
+        .modal-close {
+
+            width: 40px;
+
+            height: 40px;
+
+            display: block;
+
+            position: relative;
+
+            top: 25px;
+
+            margin: 0 auto;
+
+        }
+
+
+
+        .modal-close::before {
+
+            background-color: #036EB8;
+
+            content: '';
+
+            position: absolute;
+
+            height: 3px;
+
+            left: 6px;
+
+            width: 26px;
+
+            -webkit-transform: rotate(45deg);
+
+        }
+
+
+
+        .modal-close::after {
+
+            background-color: #036EB8;
+
+            content: '';
+
+            position: absolute;
+
+            height: 3px;
+
+            left: 6px;
+
+            width: 26px;
+
+            -webkit-transform: rotate(135deg);
+
+            z-index: 2;
+
+        }
+
+
+
+
+
+        .InAppImage {
+
+            height: auto;
+
+            width: 80%;
+
+        }
+
+
+
+        .BrowserIcon {
+
+            height: 6.5vmin;
+
+            width: 6.5vmin;
+
+        }
+
+
+
+        .pop_inApp {
+
+            font-size: 5.5vmin;
+
+        }
+
+
+
+        .end {
+
+            text-align: center;
+
+        }
+
+
+
+        @media screen and (max-width: 980px) {
+
+
+
+            body,
+
+            html {
+
+                font-size: 30px;
+
+            }
+
+
+
+            .photo {
+
+                width: 100%;
+
+            }
+
+
+
+        }
+    </style>
+
+
+
+
+
+</head>
+
+
+
+<body>
+
+    <div class="page_popreal">
+
+        <div id="android_btn">
+
+            <a
+                href="intent://arvr.google.com/scene-viewer/1.0?file=https://jucheng161.github.io/clickIMG/Scene1.glb&amp;mode=ar_preferred&amp;title=微電車AR&amp;link=https://www.google.com/maps/d/embed?mid=1G1y9LaQdZooqwANiaELwaIdRm4I83k7B#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://jucheng161.github.io/clickIMG/Scene1.glb;end;">
+
+                <button class=""><img
+                        class="photo"
+                        src="../clickIMG/跳轉畫面_左轉未依規定.png"
+                    ></button></a>
+
+        </div>
+
+
+
+        <div id="ios_btn">
+
+            <a
+                rel="ar"
+                id="ar-link"
+                href="../clickIMG/Scene1.usdz"
+            ><img
+                    class=""
+                    src=""
+                    alt=""
+                ><button class=""><img
+                        class="photo"
+                        src="../clickIMG/跳轉畫面_左轉未依規定.png"
+                    ></button>
+
+            </a>
+
+
+
+
+
+        </div>
+
+        <div id="desk_btn">
+
+            <a href="#open-moda">
+
+                <img
+                    class="photo"
+                    src="../clickIMG/跳轉畫面_左轉未依規定.png"
+                >
+
+            </a>
+
+            <div
+                id="open-moda"
+                class="modal-window"
+            >
+
+                <div>
+
+                    <img
+                        class="photoqr"
+                        src="../clickIMG/左轉彎未依規定_qrcode.png"
+                    ><br>
+
+                    <p class="pop_desk">▲手機瀏覽開啟體驗▲</p>
+
+                    <a
+                        href="#modal-close"
+                        title="Close"
+                        class="modal-close"
+                    ></a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="inAPP_btn">
+
+            <a href="#open-modainAPP"><img
+                    class="photo"
+                    src="../clickIMG/跳轉畫面_左轉未依規定.png"
+                ></a>
+
+            <div
+                id="open-modainAPP"
+                class="modal-window inAPP"
+            >
+
+                <div>
+
+                    <!-- <img
+                        class="InAppImage"
+                        src="../images/arrow.gif"
+                    > -->
+
+                    <p class="pop_inApp">請使用預設瀏覽器<img
+                            class="BrowserIcon"
+                            src="../images/safari-icon.png"
+                        >&nbsp;
+
+                        <img
+                            class="BrowserIcon"
+                            src="../images/Chrome-icon.png"
+                        >開啟體驗
+
+                    </p>
+
+                    <br>
+
+                    <a
+                        href="#modal-closeinAPP"
+                        title="Close"
+                        class="modal-close"
+                    ></a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="end">
+
+            <p class="pjcit">Design by <a href="https://www.jcit.com.tw/">JCIT主橙資訊</a></p>
+
+        </div>
+
+    </div>
+
+    <script type="text/javascript">
+
+        (function () {
+
+            var u = navigator.userAgent,
+
+                ua = navigator.userAgent.toLowerCase(),
+
+                isLineApp = u.indexOf("Line") > -1,
+
+                isInstagramApp = u.indexOf("Instagram") > -1,
+
+                isFbApp = u.indexOf("FBAV") > -1,
+
+                isWeixinApp = ua.match(/MicroMessenger/i) == "micromessenger",
+
+                isQQApp = ua.match(/QQ/i) == "qq",
+
+                isweiboApp = ua.match(/WeiBo/i) == "weibo";
+
+            document.getElementById("ios_btn").style.display = "none";
+
+            document.getElementById("android_btn").style.display = "none";
+
+            document.getElementById("desk_btn").style.display = "none";
+
+            document.getElementById("inAPP_btn").style.display = "none";
+
+
+
+            if (isLineApp || isInstagramApp || isFbApp || isWeixinApp || isQQApp || isweiboApp) {
+
+                document.getElementById("inAPP_btn").style.display = "";
+
+            }
+
+            else if (/(iPhone|iPad|iPod|iOS&&!safari)/i.test(ua)) {
+
+                document.getElementById("ios_btn").style.display = "";
+
+            } else if (/(Android)/i.test(ua)) {
+
+                document.getElementById("android_btn").style.display = "";
+
+            } else {
+
+                document.getElementById("desk_btn").style.display = "";
+
+            };
+
+        })();
+
+    </script>
+
+</body>
+
+
+
+</html>
