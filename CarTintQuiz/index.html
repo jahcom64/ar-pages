@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汽車隔熱紙透光率測驗</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>汽車隔熱紙透光率測驗 (拖曳題)</h1>
+    <p>請將正確的隔熱紙透光率（%數）拖曳至對應的車窗上，然後點擊「檢查結果」。</p>
+
+    <div id="quiz-container">
+        <div id="drag-options">
+            <h2>透光率選項 (%)</h2>
+            <div class="draggable" draggable="true" data-percent="70">70%</div>
+            <div class="draggable" draggable="true" data-percent="50">50%</div>
+            <div class="draggable" draggable="true" data-percent="30">30%</div>
+            <div class="draggable" draggable="true" data-percent="20">20% (陷阱選項)</div>
+        </div>
+
+        <div id="car-diagram">
+            <div class="car-body">
+                <div id="front-windshield" class="drop-zone" data-correct-percent="70">前擋風玻璃</div>
+                <div id="front-left-window" class="drop-zone" data-correct-percent="50">前側車窗</div>
+                <div id="rear-left-window" class="drop-zone" data-correct-percent="30">後側車窗</div>
+                <div id="rear-windshield" class="drop-zone" data-correct-percent="30">後擋風玻璃</div>
+                
+                <div class="wheel front"></div>
+                <div class="wheel rear"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="feedback"></div>
+    <button id="check-button">檢查結果</button>
+    <button id="reset-button">重新測驗</button>
+
+    <script src="script.js"></script>
+</body>
+</html>

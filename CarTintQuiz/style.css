@@ -1,0 +1,207 @@
+body {
+    font-family: '微軟正黑體', 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 { color: #007bff; }
+
+#quiz-container {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+    width: 90%;
+    max-width: 1000px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* --- 拖曳選項樣式 --- */
+#drag-options {
+    flex: 0 0 200px;
+    padding: 10px;
+    border-right: 2px solid #eee;
+}
+
+.draggable {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 15px;
+    margin: 10px 0;
+    text-align: center;
+    cursor: grab;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    transition: background-color 0.1s;
+}
+
+.draggable:hover:not(.disabled) {
+    background-color: #0056b3;
+}
+
+.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+}
+
+.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* --- 汽車圖示樣式 (簡化側面圖) --- */
+#car-diagram {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    position: relative;
+    padding-bottom: 30px; /* 給輪胎留空間 */
+}
+
+.car-body {
+    position: relative;
+    width: 700px; 
+    height: 250px; 
+    background-color: #444; 
+    border-radius: 10px;
+}
+
+/* 玻璃窗戶區的輪廓 */
+.car-body::before {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    width: 640px;
+    height: 140px;
+    background-color: #888;
+    border-radius: 10px 10px 0 0;
+    border: 3px solid #333;
+    z-index: 1;
+}
+
+/* 輪胎樣式 */
+.car-body .wheel {
+    position: absolute;
+    bottom: -30px;
+    width: 60px;
+    height: 60px;
+    background-color: #000;
+    border-radius: 50%;
+    border: 6px solid #666;
+    z-index: 3;
+}
+.car-body .wheel.front { left: 80px; }
+.car-body .wheel.rear { right: 80px; }
+
+
+/* 車窗放置區 (Drop Zones) */
+.drop-zone {
+    position: absolute;
+    top: 33px;
+    height: 134px;
+    background-color: #ccc;
+    border: 3px dashed #666;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #444;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    z-index: 2; 
+    overflow: hidden;
+    cursor: default;
+}
+
+.drop-zone.hovered {
+    background-color: #d0f0d0;
+    border-color: green;
+}
+
+/* 定位個別車窗 */
+#front-windshield { left: 33px; width: 140px; border-radius: 8px 0 0 0; }
+#front-left-window { left: 173px; width: 180px; }
+#rear-left-window { left: 353px; width: 180px; }
+#rear-windshield { left: 533px; width: 134px; border-radius: 0 8px 0 0; }
+
+/* 放置的隔熱紙樣式 */
+.drop-zone .dropped {
+    position: absolute;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: default;
+    opacity: 1;
+    transform: none;
+    box-shadow: none;
+    color: white; /* 文字顏色 */
+    font-weight: bold;
+}
+
+/* 根據透光率模擬顏色深度 (顏色越深，透光率越低) */
+.drop-zone .dropped[data-percent="70"] { background-color: rgba(0, 0, 0, 0.3); }
+.drop-zone .dropped[data-percent="50"] { background-color: rgba(0, 0, 0, 0.5); }
+.drop-zone .dropped[data-percent="30"] { background-color: rgba(0, 0, 0, 0.7); }
+.drop-zone .dropped[data-percent="20"] { background-color: rgba(0, 0, 0, 0.8); }
+
+/* --- 回饋與按鈕樣式 --- */
+#feedback {
+    margin: 20px 0;
+    font-size: 1.3em;
+    font-weight: bold;
+    min-height: 30px;
+    text-align: center;
+}
+
+#check-button, #reset-button {
+    padding: 10px 25px;
+    margin: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+#check-button {
+    background-color: #28a745; /* 綠色 */
+    color: white;
+}
+
+#check-button:hover:not(.disabled) {
+    background-color: #1e7e34;
+}
+
+#reset-button {
+    background-color: #dc3545; /* 紅色 */
+    color: white;
+}
+
+#reset-button:hover:not(.disabled) {
+    background-color: #bd2130;
+}
+
+/* 檢查結果的樣式回饋 */
+.drop-zone.correct { border-color: #28a745; background-color: #d4edda; }
+.drop-zone.incorrect { border-color: #dc3545; background-color: #f8d7da; }
+
+.dropped-correct { background-color: rgba(40, 167, 69, 0.8) !important; }
+.dropped-incorrect { background-color: rgba(220, 53, 69, 0.8) !important; }
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
