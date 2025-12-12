@@ -8,28 +8,36 @@
 </head>
 <body>
     <h1>汽車隔熱紙透光率測驗 (拖曳題)</h1>
-    <p>請將正確的隔熱紙透光率（%數）拖曳至對應的車窗上，然後點擊「檢查結果」。</p>
+    <p>請將正確的隔熱紙透光率（%數或選項）拖曳至對應的車窗上，然後點擊「檢查結果」。</p>
 
     <div id="quiz-container">
         <div id="drag-options">
             <h2>透光率選項 (%)</h2>
-            <div class="draggable" draggable="true" data-percent="70">70%</div>
-            <div class="draggable" draggable="true" data-percent="50">50%</div>
-            <div class="draggable" draggable="true" data-percent="30">30%</div>
-            <div class="draggable" draggable="true" data-percent="20">20%</div>
+            <div class="draggable" draggable="true" data-value="70">70%</div>
+            <div class="draggable" draggable="true" data-value="40">40%</div>
+            <div class="draggable" draggable="true" data-value="20">20%</div>
+            <div class="draggable optional" draggable="true" data-value="Any">皆可</div>
+            <p>(選項拖曳後不會消失，可重複使用)</p>
         </div>
 
         <div id="car-diagram">
             <div class="car-body">
-                <div id="front-windshield" class="drop-zone" data-correct-percent="70">前擋風玻璃</div>
-                <div id="front-left-window" class="drop-zone" data-correct-percent="50">前側車窗</div>
-                <div id="rear-left-window" class="drop-zone" data-correct-percent="30">後側車窗</div>
-                <div id="rear-windshield" class="drop-zone" data-correct-percent="30">後擋風玻璃</div>
+                <div id="front-windshield" class="drop-zone" data-correct-value="70">前擋風玻璃</div>
+                <div id="front-left-window" class="drop-zone" data-correct-value="40">前側車窗</div>
+                <div id="rear-left-window" class="drop-zone" data-correct-value="Any">後側車窗</div>
+                <div id="rear-windshield" class="drop-zone" data-correct-value="Any">後擋風玻璃</div>
                 
                 <div class="wheel front"></div>
                 <div class="wheel rear"></div>
             </div>
         </div>
+    </div>
+
+    <div id="results">
+        <p>前擋實際放置：<span id="res-front-windshield">未放置</span></p>
+        <p>前側實際放置：<span id="res-front-left-window">未放置</span></p>
+        <p>後側實際放置：<span id="res-rear-left-window">未放置</span></p>
+        <p>後擋實際放置：<span id="res-rear-windshield">未放置</span></p>
     </div>
 
     <div id="feedback"></div>
