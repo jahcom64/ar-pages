@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汽車隔熱紙透光率教學宣導</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #f4f6f7;
+            --box-bg: #ecf0f1;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p.desc {
+            color: #7f8c8d;
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        /* --- 選項區域 --- */
+        .options-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 40px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .draggable-item {
+            width: 80px;
+            height: 50px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 1.1em;
+            touch-action: none; /* 為了手機拖曳優化 */
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .draggable-item:hover {
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        /* --- 汽車示意圖區域 --- */
+        .car-container {
+            position: relative;
+            width: 320px; /* 汽車寬度 */
+            height: 500px; /* 汽車長度 */
+            background-color: #bdc3c7; /* 車身顏色 */
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        /* 裝飾：車頭燈 */
+        .car-container::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            width: 80%;
+            height: 20px;
+            border-radius: 10px;
+            background: linear-gradient(to right, #f1c40f 20%, transparent 20%, transparent 80%, #f1c40f 80%);
+        }
+
+        .drop-zone {
+            width: 220px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.6);
+            border: 2px dashed #7f8c8d;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.hovered {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-color: var(--accent-color);
+            transform: scale(1.02);
+        }
+
+        .drop-zone span.label {
+            font-size: 0.8em;
+            color: #555;
+            margin-bottom: 5px;
+            pointer-events: none;
+        }
+
+        .drop-zone .content {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--primary-color);
+            pointer-events: none;
+        }
+
+        /* 特定位置微調 */
+        #zone-front-windshield { margin-top: 40px; height: 80px; border-radius: 15px 15px 5px 5px; }
+        #zone-front-side { width: 260px; } /* 較寬代表兩側 */
+        #zone-rear-side { width: 260px; }
+        #zone-rear-windshield { height: 60px; border-radius: 5px 5px 15px 15px; }
+
+        /* --- 驗證狀態 --- */
+        .drop-zone.correct {
+            background-color: rgba(39, 174, 96, 0.3);
+            border: 2px solid var(--success-color);
+        }
+        .drop-zone.wrong {
+            background-color: rgba(231, 76, 60, 0.3);
+            border: 2px solid var(--error-color);
+        }
+
+        /* --- 按鈕區域 --- */
+        .controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        #check-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        #check-btn:hover { background-color: #1a252f; }
+
+        #reset-btn {
+            background-color: #95a5a6;
+            color: white;
+        }
+        #reset-btn:hover { background-color: #7f8c8d; }
+
+        #result-msg {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            height: 30px;
+        }
+
+        /* 手機版適配 */
+        @media (max-width: 400px) {
+            .car-container { width: 280px; }
+            .drop-zone { width: 200px; }
+            #zone-front-side, #zone-rear-side { width: 240px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1><i class="fas fa-car"></i> 汽車隔熱紙透光率測驗</h1>
+    <p class="desc">請將上方的透光率選項拖曳至車輛對應的位置。測驗您對隔熱紙透光率規範的了解！</p>
+
+    <div class="options-container">
+        <div class="draggable-item" draggable="true" data-value="90%">90%</div>
+        <div class="draggable-item" draggable="true" data-value="70%">70%</div>
+        <div class="draggable-item" draggable="true" data-value="40%">40%</div>
+        <div class="draggable-item" draggable="true" data-value="10%">10%</div>
+        <div class="draggable-item" draggable="true" data-value="皆可">皆可</div>
+    </div>
+
+    <div class="car-container">
+        <div class="drop-zone" id="zone-front-windshield" data-answer="70%">
+            <span class="label">前擋風玻璃</span>
+            <div class="content">請拖曳</div>
+        </div>
+
+        <div class="drop-zone" id="zone-front-side" data-answer="40%">
+            <span class="label">前側窗 (駕駛/副駕)</span>
+            <div class="content">請拖曳</div>
+        </div>
+
+        <div class="drop-zone" id="zone-rear-side" data-answer="皆可">
+            <span class="label">後側窗</span>
+            <div class="content">請拖曳</div>
+        </div>
+
+        <div class="drop-zone" id="zone-rear-windshield" data-answer="皆可">
+            <span class="label">後擋風玻璃</span>
+            <div class="content">請拖曳</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="check-btn" onclick="checkAnswers()">檢查結果</button>
+        <button id="reset-btn" onclick="resetGame()">重置</button>
+    </div>
+    <div id="result-msg"></div>
+
+    <script>
+        const draggables = document.querySelectorAll('.draggable-item');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const resultMsg = document.getElementById('result-msg');
+
+        let draggedItem = null;
+        let draggedValue = null;
+
+        // --- 電腦版 Drag & Drop 事件 ---
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                draggedItem = draggable;
+                draggedValue = draggable.getAttribute('data-value');
+                setTimeout(() => draggable.style.opacity = '0.5', 0);
+            });
+
+            draggable.addEventListener('dragend', () => {
+                draggedItem.style.opacity = '1';
+                draggedItem = null;
+                draggedValue = null;
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault(); // 允許 Drop
+                zone.classList.add('hovered');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('hovered');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('hovered');
+                if (draggedValue) {
+                    updateZone(zone, draggedValue);
+                }
+            });
+        });
+
+        // --- 手機版 Touch 事件 (模擬 Drag & Drop) ---
+        // 手機上沒有原生的 Drag&Drop，需要計算手指位置
+        draggables.forEach(draggable => {
+            draggable.addEventListener('touchstart', (e) => {
+                draggedValue = draggable.getAttribute('data-value');
+                draggable.style.opacity = '0.5';
+            }, {passive: true});
+
+            draggable.addEventListener('touchend', (e) => {
+                draggable.style.opacity = '1';
+                // 取得手指離開時的座標
+                const touch = e.changedTouches[0];
+                const endX = touch.clientX;
+                const endY = touch.clientY;
+
+                // 檢查這個座標是否在某個 drop zone 內
+                dropZones.forEach(zone => {
+                    const rect = zone.getBoundingClientRect();
+                    if (endX >= rect.left && endX <= rect.right && 
+                        endY >= rect.top && endY <= rect.bottom) {
+                        updateZone(zone, draggedValue);
+                    }
+                });
+            });
+        });
+
+        // --- 核心功能函數 ---
+
+        function updateZone(zone, value) {
+            // 清除之前的狀態
+            zone.classList.remove('correct', 'wrong');
+            
+            // 更新顯示文字
+            const contentDiv = zone.querySelector('.content');
+            contentDiv.textContent = value;
+            
+            // 存儲當前使用者的選擇到 data-current 屬性，方便之後檢查
+            zone.setAttribute('data-current', value);
+        }
+
+        function checkAnswers() {
+            let allCorrect = true;
+            let allFilled = true;
+
+            dropZones.forEach(zone => {
+                const userAnswer = zone.getAttribute('data-current');
+                const correctAnswer = zone.getAttribute('data-answer');
+
+                if (!userAnswer) {
+                    allFilled = false;
+                    return; // 跳過檢查
+                }
+
+                if (userAnswer === correctAnswer) {
+                    zone.classList.add('correct');
+                    zone.classList.remove('wrong');
+                } else {
+                    zone.classList.add('wrong');
+                    zone.classList.remove('correct');
+                    allCorrect = false;
+                }
+            });
+
+            if (!allFilled) {
+                resultMsg.textContent = "請填滿所有選項再檢查喔！";
+                resultMsg.style.color = "#e67e22";
+            } else if (allCorrect) {
+                resultMsg.innerHTML = "<i class='fas fa-check-circle'></i> 恭喜！完全正確！符合法規標準。";
+                resultMsg.style.color = "#27ae60";
+            } else {
+                resultMsg.innerHTML = "<i class='fas fa-times-circle'></i> 部分錯誤，請依照括號內的提示再試一次。";
+                resultMsg.style.color = "#c0392b";
+            }
+        }
+
+        function resetGame() {
+            dropZones.forEach(zone => {
+                zone.classList.remove('correct', 'wrong', 'hovered');
+                zone.removeAttribute('data-current');
+                zone.querySelector('.content').textContent = "請拖曳";
+            });
+            resultMsg.textContent = "";
+        }
+    </script>
+</body>
+</html>
