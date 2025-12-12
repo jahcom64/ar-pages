@@ -1,3 +1,5 @@
+/* ... (保留上一版本的大部分樣式，只修改與拖曳相關的) ... */
+
 body {
     font-family: '微軟正黑體', 'Arial', sans-serif;
     display: flex;
@@ -41,8 +43,13 @@ h1 { color: #007bff; }
     transition: background-color 0.1s;
 }
 
-.draggable:hover:not(.disabled) {
-    background-color: #0056b3;
+.draggable.optional {
+    background-color: #ffc107; /* 黃色 for "皆可" */
+    color: #333;
+}
+
+.draggable:hover {
+    opacity: 0.8;
 }
 
 .dragging {
@@ -50,19 +57,16 @@ h1 { color: #007bff; }
     transform: scale(1.05);
 }
 
-.disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
 /* --- 汽車圖示樣式 (簡化側面圖) --- */
+/* (Car body and wheel styles remain the same) */
+
 #car-diagram {
     flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: flex-end;
     position: relative;
-    padding-bottom: 30px; /* 給輪胎留空間 */
+    padding-bottom: 30px; 
 }
 
 .car-body {
@@ -73,7 +77,6 @@ h1 { color: #007bff; }
     border-radius: 10px;
 }
 
-/* 玻璃窗戶區的輪廓 */
 .car-body::before {
     content: '';
     position: absolute;
@@ -87,7 +90,6 @@ h1 { color: #007bff; }
     z-index: 1;
 }
 
-/* 輪胎樣式 */
 .car-body .wheel {
     position: absolute;
     bottom: -30px;
@@ -116,10 +118,12 @@ h1 { color: #007bff; }
     color: #444;
     font-weight: bold;
     font-size: 14px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
     z-index: 2; 
     overflow: hidden;
     cursor: default;
+    /* 確保初始文字可見 */
+    line-height: 1.2;
 }
 
 .drop-zone.hovered {
@@ -127,81 +131,58 @@ h1 { color: #007bff; }
     border-color: green;
 }
 
-/* 定位個別車窗 */
+/* 定位個別車窗 (保留原定位) */
 #front-windshield { left: 33px; width: 140px; border-radius: 8px 0 0 0; }
 #front-left-window { left: 173px; width: 180px; }
 #rear-left-window { left: 353px; width: 180px; }
 #rear-windshield { left: 533px; width: 134px; border-radius: 0 8px 0 0; }
 
-/* 放置的隔熱紙樣式 */
-.drop-zone .dropped {
-    position: absolute;
-    margin: 0;
+/* 放置結果樣式 (用來取代 drop-zone 內容的 div) */
+.dropped-display {
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 24px;
-    cursor: default;
-    opacity: 1;
-    transform: none;
-    box-shadow: none;
-    color: white; /* 文字顏色 */
-    font-weight: bold;
-}
-
-/* 根據透光率模擬顏色深度 (顏色越深，透光率越低) */
-.drop-zone .dropped[data-percent="70"] { background-color: rgba(0, 0, 0, 0.3); }
-.drop-zone .dropped[data-percent="50"] { background-color: rgba(0, 0, 0, 0.5); }
-.drop-zone .dropped[data-percent="30"] { background-color: rgba(0, 0, 0, 0.7); }
-.drop-zone .dropped[data-percent="20"] { background-color: rgba(0, 0, 0, 0.8); }
-
-/* --- 回饋與按鈕樣式 --- */
-#feedback {
-    margin: 20px 0;
-    font-size: 1.3em;
-    font-weight: bold;
-    min-height: 30px;
-    text-align: center;
-}
-
-#check-button, #reset-button {
-    padding: 10px 25px;
-    margin: 5px;
-    font-size: 18px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-}
-
-#check-button {
-    background-color: #28a745; /* 綠色 */
     color: white;
+    font-weight: bold;
+    /* 初始的未放置/中性顏色 */
+    background-color: rgba(0, 0, 0, 0.4); 
+    transition: background-color 0.3s;
 }
 
-#check-button:hover:not(.disabled) {
-    background-color: #1e7e34;
-}
-
-#reset-button {
-    background-color: #dc3545; /* 紅色 */
-    color: white;
-}
-
-#reset-button:hover:not(.disabled) {
-    background-color: #bd2130;
-}
+/* 根據透光率模擬顏色深度 */
+.color-70 { background-color: rgba(0, 0, 0, 0.3); }
+.color-50 { background-color: rgba(0, 0, 0, 0.5); }
+.color-40 { background-color: rgba(0, 0, 0, 0.6); }
+.color-30 { background-color: rgba(0, 0, 0, 0.7); }
+.color-20 { background-color: rgba(0, 0, 0, 0.8); }
+.color-Any { background-color: rgba(255, 193, 7, 0.8); color: #333; }
 
 /* 檢查結果的樣式回饋 */
 .drop-zone.correct { border-color: #28a745; background-color: #d4edda; }
 .drop-zone.incorrect { border-color: #dc3545; background-color: #f8d7da; }
 
-.dropped-correct { background-color: rgba(40, 167, 69, 0.8) !important; }
-.dropped-incorrect { background-color: rgba(220, 53, 69, 0.8) !important; }
+.dropped-display.is-correct { background-color: rgba(40, 167, 69, 0.8) !important; }
+.dropped-display.is-incorrect { background-color: rgba(220, 53, 69, 0.8) !important; }
 
-.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+/* --- 放置結果顯示區樣式 --- */
+#results {
+    margin: 20px 0;
+    padding: 10px 20px;
+    border: 1px dashed #666;
+    border-radius: 5px;
+    width: 90%;
+    max-width: 1000px;
+    display: flex;
+    justify-content: space-around;
+    font-size: 1em;
 }
+
+#results span {
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* ... (Button and feedback styles remain the same) ... */
