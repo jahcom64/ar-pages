@@ -119,19 +119,13 @@
 
     <div class="container">
         <h1>🚗 汽車隔熱紙透光度模擬器</h1>
-        <p>請調整下面的滑桿，模擬不同透光度下觀看車外景色的影響。</p>
-        
-        <div class="car-view" id="car-window">
-            <img id="outside-view" src="./bg.jpg" alt="車外景色 (請替換圖片)">
-        </div>
-        
-        <div class="car-view" id="car-window">
-            <img id="outside-view" src="./bg.jpg" alt="車外景色 (請替換圖片)">
-            
-            <div id="tint-overlay"></div>
-        </div>
 
-        <div class="controls">
+        <p>透光度 (VLT): 100%</p>
+        <div class="car-view" id="car-window">
+            <img id="outside-view" src="./bg.jpg" alt="車外景色 (請替換圖片)">
+        </div>
+         <p>請調整下面的滑桿，模擬不同透光度下觀看車外景色的影響。</p>
+         <div class="controls">
             <div class="control-group">
                 <label for="transparency-slider">
                     透光度 (VLT): <span id="transparency-value">50%</span>
@@ -152,7 +146,14 @@
    *             <button class="color-btn" data-color="green" style="background-color: #001a00;"></button>
    *         </div>
 --->
+        </div>       
+        <div class="car-view" id="car-window">
+            <img id="outside-view" src="./bg.jpg" alt="車外景色 (請替換圖片)">
+            
+            <div id="tint-overlay"></div>
         </div>
+
+
     </div>
 
     <script>
@@ -248,6 +249,7 @@
 
 </body>
 </html>
+
 
 
 
