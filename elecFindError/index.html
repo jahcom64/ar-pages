@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>微電車法規大家來找碴</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>微電車法規：大家來找碴！</h1>
+        <p>小明騎著微電車載小美出去玩，咦，但好像有點怪怪的，你能找出不符法規的地方嗎？</p>
+    </header>
+
+    <main class="game-container">
+        <div id="image-map">
+            <img id="main-image" src="elecBg.jpg" alt="小明小美騎微電車">
+            
+            <div class="hotspot" id="hotspot-boy" style="left: 32%; top: 22%;"></div>
+            <div class="hotspot" id="hotspot-girl" style="left: 48%; top: 40%;"></div>
+            <div class="hotspot" id="hotspot-id" style="left: 33%; top: 58%;"></div>
+            <div class="hotspot" id="hotspot-speed" style="left: 20%; top: 43%;"></div>
+
+            <div class="clue hidden" id="clue-boy">
+                <div class="circle"></div>
+                <p>⚠️ **法規不符：** 騎微電車需**戴安全帽**。</p>
+            </div>
+
+            <div class="clue hidden" id="clue-girl">
+                <div class="circle"></div>
+                <p>⚠️ **法規不符：** 騎微電車**不得載人**。</p>
+            </div>
+
+            <div class="clue hidden" id="clue-id">
+                <div class="circle"></div>
+                <p>⚠️ **法規不符：** 駕駛微電車需**年滿14歲**。</p>
+            </div>
+
+            <div class="clue hidden" id="clue-speed">
+                <div class="circle"></div>
+                <p>⚠️ **法規不符：** 時速需**低於25km/hr**。</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="show-all-btn">顯示所有答案</button>
+            <button id="reset-btn">再玩一次</button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
