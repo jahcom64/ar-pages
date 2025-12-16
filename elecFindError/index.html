@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微電車法規 大家來找碴</title>
+    <title>微電車法規 大家來找碴 (點擊顯示)</title>
     <style>
         /* 網頁基本設定 */
         body {
@@ -20,9 +20,8 @@
         /* 圖片容器：用於定位熱點 */
         .image-container {
             position: relative;
-            /* 圖片的寬度，您可以根據原圖調整 */
             width: 800px;
-            max-width: 90%; /* 確保在小螢幕上也能適應 */
+            max-width: 90%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
@@ -37,25 +36,23 @@
         .hotspot {
             position: absolute;
             cursor: pointer;
-            border: 3px solid rgba(255, 0, 0, 0.5); /* 視覺提示熱點範圍 */
-            border-radius: 50%; /* 圓形熱點 */
-            box-sizing: border-box; /* 確保邊框不會擴大熱點尺寸 */
-            transition: border-color 0.3s;
-            /* 讓熱點本身透明，只顯示邊框 */
+            /* 邊框僅用於開發/測試時，確定點擊範圍。正式版本通常會註釋或移除 */
+            border: 3px solid rgba(0, 0, 0, 0.2); 
+            border-radius: 50%;
+            box-sizing: border-box;
             background-color: transparent;
         }
 
         .hotspot:hover {
-            border-color: rgba(0, 0, 255, 0.8);
+            border-color: rgba(0, 0, 255, 0.5);
         }
 
         /* 熱點 1：男孩頭部 (安全帽) */
-        /* 數值根據圖片上的相對位置調整 */
         #hotspot-boy {
-            top: 20%; /* 距離圖片頂部的百分比 */
-            left: 30%; /* 距離圖片左側的百分比 */
-            width: 25%; /* 熱點的寬度 (圖片寬度的百分比) */
-            height: 25%; /* 熱點的高度 (圖片高度的百分比) */
+            top: 30%; 
+            left: 30%; 
+            width: 25%; 
+            height: 35%;
         }
         
         /* 熱點 2：小女孩 (載人) */
@@ -69,17 +66,20 @@
         /* 提示框的基本樣式 */
         .popup {
             position: absolute;
-            /* 預設隱藏 */
-            display: none; 
+            /* **關鍵修改：使用 opacity 和 visibility 預設隱藏** */
+            opacity: 0; 
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s; /* 加入過渡效果 */
+            
             padding: 15px;
-            border-radius: 50%; /* 讓提示框像圓圈一樣 */
+            border-radius: 50%; 
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             text-align: center;
             font-weight: bold;
             line-height: 1.5;
-            z-index: 10; /* 確保提示框在最上層 */
-            width: 180px; /* 提示框寬度 */
-            height: 180px; /* 提示框高度 */
+            z-index: 10;
+            width: 180px; 
+            height: 180px; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -90,7 +90,6 @@
         #popup-boy {
             border: 5px solid red;
             color: red;
-            /* 讓提示框位於熱點附近 */
             top: 5%;
             left: 5%;
         }
@@ -102,13 +101,19 @@
             top: 55%;
             left: 55%;
         }
+        
+        /* 顯示狀態 */
+        .popup.visible {
+            opacity: 1;
+            visibility: visible;
+        }
 
     </style>
 </head>
 <body>
 
     <div class="image-container">
-        <img src="elecBg.jpg" alt="微電車安全宣導圖片">
+        <img src="Gemini_Generated_Image_mmmdkimmmdkimmmd.jpg" alt="微電車安全宣導圖片">
 
         <div class="hotspot" id="hotspot-boy" onclick="togglePopup('popup-boy')"></div>
 
@@ -129,38 +134,39 @@
         function togglePopup(popupId) {
             const popup = document.getElementById(popupId);
             
-            // 如果提示框是隱藏的，就顯示它；如果是顯示的，就隱藏它
-            if (popup.style.display === 'block') {
-                popup.style.display = 'none';
-            } else {
-                // 隱藏所有其他提示框 (可選，讓畫面更乾淨)
-                document.querySelectorAll('.popup').forEach(p => {
-                    if (p.id !== popupId) {
-                        p.style.display = 'none';
-                    }
-                });
-                // 顯示點擊的提示框
-                popup.style.display = 'block';
+            // 檢查是否已經顯示 (擁有 'visible' 類別)
+            const isVisible = popup.classList.contains('visible');
+
+            // 隱藏所有其他的提示框
+            document.querySelectorAll('.popup').forEach(p => {
+                p.classList.remove('visible');
+            });
+
+            // 如果原本是隱藏的，現在就顯示它 (加入 'visible' 類別)
+            if (!isVisible) {
+                popup.classList.add('visible');
             }
+            // 如果原本就是顯示的，上面的步驟已經把它隱藏了 (因為先移除了所有 visible 類別，然後沒再加回去)
         }
 
         // 當點擊圖片容器以外的區域時，隱藏所有提示框 (讓使用者能關閉提示)
         document.addEventListener('click', function(event) {
             const container = document.querySelector('.image-container');
             const hotspots = document.querySelectorAll('.hotspot');
-            let isHotspotClick = false;
-
-            // 檢查點擊是否在熱點上
-            hotspots.forEach(hotspot => {
-                if (hotspot.contains(event.target)) {
-                    isHotspotClick = true;
+            
+            // 檢查點擊是否發生在熱點區域或提示框上
+            let isTargetRelevant = false;
+            if (container.contains(event.target)) {
+                // 如果點擊在容器內部，且不是圖片本身，則可能是熱點或提示框
+                if (event.target.classList.contains('hotspot') || event.target.closest('.popup')) {
+                    isTargetRelevant = true;
                 }
-            });
+            }
 
-            // 如果點擊不在熱點上且不在提示框上，則隱藏所有提示框
-            if (!isHotspotClick && !container.contains(event.target)) {
+            // 如果點擊目標不是熱點也不是提示框，則隱藏所有提示
+            if (!isTargetRelevant) {
                 document.querySelectorAll('.popup').forEach(p => {
-                    p.style.display = 'none';
+                    p.classList.remove('visible');
                 });
             }
         });
@@ -169,4 +175,3 @@
 
 </body>
 </html>
-
