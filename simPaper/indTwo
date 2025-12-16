@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汽車隔熱紙透光度對照模擬器</title>
+    <style>
+        /* 基礎樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px; /* 增加最大寬度以容納並排的兩個視窗 */
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 視窗容器 - 用於並排顯示 */
+        .view-comparison {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        /* 單個模擬視窗樣式 */
+        .car-view {
+            position: relative;
+            flex: 1; /* 讓兩個視窗平均分配寬度 */
+            padding-top: 28.125%; /* 維持 16:9 比例 (寬度的一半) */
+            overflow: hidden;
+            border: 5px solid #333;
+            border-radius: 5px;
+        }
+
+        .car-view-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        /* 圖片和覆蓋層通用樣式 */
+        .outside-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 隔熱紙覆蓋層樣式 */
+        #tint-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black; /* 隔熱紙顏色固定為黑色 */
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 控制面板樣式 */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .control-group {
+            flex: 1 1 300px;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .scene-btn {
+            padding: 8px 15px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            border-radius: 5px;
+            margin-right: 10px;
+            background-color: #ccc;
+            color: #333;
+            font-weight: bold;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .scene-btn.active {
+            border-color: #007bff;
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🚗 汽車隔熱紙透光度對照模擬器</h1>
+        <p>請選擇場景並調整透光度滑桿，即時對照無隔熱紙 (100% 透明度) 的效果。</p>
+        
+        <div class="view-comparison">
+            
+            <div class="view-group">
+                <div class="car-view-title">✅ 對照組 (透光度 100%)</div>
+                <div class="car-view">
+                    <img id="reference-view" class="outside-view" src="bg1.jpg" alt="無隔熱紙景色">
+                </div>
+            </div>
+
+            <div class="view-group">
+                <div class="car-view-title">🔬 模擬組 (當前透光度)</div>
+                <div class="car-view">
+                    <img id="simulated-view" class="outside-view" src="bg1.jpg" alt="模擬隔熱紙景色">
+                    
+                    <div id="tint-overlay"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>選擇底圖場景：</label>
+                <button class="scene-btn active" data-filename="bg1.jpg">場景 1</button>
+                <button class="scene-btn" data-filename="bg2.jpg">場景 2</button>
+                <button class="scene-btn" data-filename="bg3.jpg">場景 3</button>
+            </div>
+            
+            <div class="control-group">
+                <label for="transparency-slider">
+                    透光度 (VLT): <span id="transparency-value">50%</span>
+                </label>
+                <input type="range" id="transparency-slider" min="5" max="80" value="50">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const slider = document.getElementById('transparency-slider');
+        const overlay = document.getElementById('tint-overlay');
+        const valueDisplay = document.getElementById('transparency-value');
+        const sceneButtons = document.querySelectorAll('.scene-btn');
+        const referenceView = document.getElementById('reference-view'); // 100% 對照圖
+        const simulatedView = document.getElementById('simulated-view'); // 模擬圖
+
+        /**
+         * 函數：根據透光度更新隔熱紙的不透明度
+         */
+        function updateTint() {
+            const transparency = slider.value;
+            
+            // 1. 更新顯示數值
+            valueDisplay.textContent = transparency + '%';
+
+            // 2. 計算覆蓋層的不透明度 (opacity)
+            // 公式：opacity = 1 - (透光度 / 100)
+            const opacity = 1 - (transparency / 100);
+            
+            // 3. 應用到 CSS，模擬黑色隔熱紙
+            overlay.style.opacity = opacity;
+        }
+
+        /**
+         * 函數：切換底圖場景
+         */
+        function selectScene(filename, btn) {
+            // 移除所有場景按鈕的 active 狀態
+            sceneButtons.forEach(b => b.classList.remove('active'));
+            // 設定當前按鈕 active 狀態
+            btn.classList.add('active');
+
+            // 更改兩張圖片的 src
+            referenceView.src = filename;
+            simulatedView.src = filename;
+            referenceView.alt = `無隔熱紙景色: ${filename}`;
+            simulatedView.alt = `模擬隔熱紙景色: ${filename}`;
+        }
+
+        // --- 事件監聽 ---
+
+        // 監聽透光度滑桿的改變
+        slider.addEventListener('input', updateTint);
+
+        // 監聽場景選擇按鈕
+        sceneButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filename = btn.getAttribute('data-filename');
+                selectScene(filename, btn);
+            });
+        });
+
+        // 初始狀態設定：設定滑桿值，並選擇第一個場景
+        updateTint();
+        selectScene('bg1.jpg', document.querySelector('.scene-btn[data-filename="bg1.jpg"]'));
+    </script>
+
+</body>
+</html>
