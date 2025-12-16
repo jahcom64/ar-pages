@@ -208,7 +208,17 @@
             from { transform: scale(0.8); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
-
+/* ====== 針對手機版的調整 (螢幕寬度小於 768px 時觸發) ====== */
+        @media (max-width: 768px) {
+            .answer-box {
+                font-size: 12px;       /* 手機版字體改小 */
+                padding: 5px 10px;     /* 對話框內距也縮小，讓框框變精緻 */
+                border-width: 1px;     /* 邊框改細一點 */
+                
+                /* 如果覺得手機版對話框飄太高，可以把下面的 100px 改小，例如 60px */
+                /* transform: translateX(-50%) translateY(-60px); */ 
+            }
+        }
     </style>
 </head>
 <body>
