@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微電車法規 大家來找碴</title>
+    <style>
+        /* 網頁基本設定 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        /* 圖片容器：用於定位熱點 */
+        .image-container {
+            position: relative;
+            /* 圖片的寬度，您可以根據原圖調整 */
+            width: 800px;
+            max-width: 90%; /* 確保在小螢幕上也能適應 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 原始圖片 */
+        .image-container img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* 熱點區域的基本樣式 */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            border: 3px solid rgba(255, 0, 0, 0.5); /* 視覺提示熱點範圍 */
+            border-radius: 50%; /* 圓形熱點 */
+            box-sizing: border-box; /* 確保邊框不會擴大熱點尺寸 */
+            transition: border-color 0.3s;
+            /* 讓熱點本身透明，只顯示邊框 */
+            background-color: transparent;
+        }
+
+        .hotspot:hover {
+            border-color: rgba(0, 0, 255, 0.8);
+        }
+
+        /* 熱點 1：男孩頭部 (安全帽) */
+        /* 數值根據圖片上的相對位置調整 */
+        #hotspot-boy {
+            top: 30%; /* 距離圖片頂部的百分比 */
+            left: 30%; /* 距離圖片左側的百分比 */
+            width: 25%; /* 熱點的寬度 (圖片寬度的百分比) */
+            height: 35%; /* 熱點的高度 (圖片高度的百分比) */
+        }
+        
+        /* 熱點 2：小女孩 (載人) */
+        #hotspot-girl {
+            top: 40%;
+            left: 45%;
+            width: 20%;
+            height: 45%;
+        }
+
+        /* 提示框的基本樣式 */
+        .popup {
+            position: absolute;
+            /* 預設隱藏 */
+            display: none; 
+            padding: 15px;
+            border-radius: 50%; /* 讓提示框像圓圈一樣 */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            font-weight: bold;
+            line-height: 1.5;
+            z-index: 10; /* 確保提示框在最上層 */
+            width: 180px; /* 提示框寬度 */
+            height: 180px; /* 提示框高度 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        /* 提示框 1：男孩的 (紅色邊框) */
+        #popup-boy {
+            border: 5px solid red;
+            color: red;
+            /* 讓提示框位於熱點附近 */
+            top: 5%;
+            left: 5%;
+        }
+
+        /* 提示框 2：女孩的 (藍色邊框) */
+        #popup-girl {
+            border: 5px solid blue;
+            color: blue;
+            top: 55%;
+            left: 55%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="image-container">
+        <img src="elecBg.jpg" alt="微電車安全宣導圖片">
+
+        <div class="hotspot" id="hotspot-boy" onclick="togglePopup('popup-boy')"></div>
+
+        <div class="hotspot" id="hotspot-girl" onclick="togglePopup('popup-girl')"></div>
+
+        <div class="popup" id="popup-boy">
+            騎微電車<br>**需戴安全帽**
+        </div>
+
+        <div class="popup" id="popup-girl">
+            騎微電車<br>**不得載人**
+        </div>
+
+    </div>
+
+    <script>
+        // JavaScript 函數：用來切換提示框的顯示/隱藏
+        function togglePopup(popupId) {
+            const popup = document.getElementById(popupId);
+            
+            // 如果提示框是隱藏的，就顯示它；如果是顯示的，就隱藏它
+            if (popup.style.display === 'block') {
+                popup.style.display = 'none';
+            } else {
+                // 隱藏所有其他提示框 (可選，讓畫面更乾淨)
+                document.querySelectorAll('.popup').forEach(p => {
+                    if (p.id !== popupId) {
+                        p.style.display = 'none';
+                    }
+                });
+                // 顯示點擊的提示框
+                popup.style.display = 'block';
+            }
+        }
+
+        // 當點擊圖片容器以外的區域時，隱藏所有提示框 (讓使用者能關閉提示)
+        document.addEventListener('click', function(event) {
+            const container = document.querySelector('.image-container');
+            const hotspots = document.querySelectorAll('.hotspot');
+            let isHotspotClick = false;
+
+            // 檢查點擊是否在熱點上
+            hotspots.forEach(hotspot => {
+                if (hotspot.contains(event.target)) {
+                    isHotspotClick = true;
+                }
+            });
+
+            // 如果點擊不在熱點上且不在提示框上，則隱藏所有提示框
+            if (!isHotspotClick && !container.contains(event.target)) {
+                document.querySelectorAll('.popup').forEach(p => {
+                    p.style.display = 'none';
+                });
+            }
+        });
+        
+    </script>
+
+</body>
+</html>
