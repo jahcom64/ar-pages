@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微電車法規大家來找碴</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        p.description {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        /* 遊戲主容器 */
+        .game-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden; /* 防止內容溢出 */
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* 背景圖片 */
+        .game-bg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 800px; /* 限制最大寬度 */
+        }
+
+        /* 熱點通用樣式 */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            z-index: 10;
+            /* 開發時可暫時加 border: 1px solid red; 來除錯位置 */
+        }
+
+        /* 紅色圈圈 (預設隱藏) */
+        .circle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 5px solid #ff3333;
+            border-radius: 50%;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease-out;
+            pointer-events: none; /* 讓點擊能穿透圈圈 */
+        }
+
+        /* 答案對話框 (預設隱藏) */
+        .answer-box {
+            position: absolute;
+            /* 位於熱點上方 100px，利用 translate 定位更精準 */
+            bottom: 100%; 
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px); /* 上移 100px */
+            
+            background-color: white;
+            border: 2px solid #333;
+            padding: 10px 15px;
+            border-radius: 8px;
+            white-space: nowrap;
+            font-weight: bold;
+            color: #d32f2f;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* 為了產生對話框下方的小箭頭 */
+        .answer-box::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        
+        /* 甚至還要一條線連下來以確保視覺連結感 (可選，這裡僅做對話框) */
+
+        /* 激活狀態 (顯示圈圈與對話框) */
+        .hotspot.active .circle {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .hotspot.active .answer-box {
+            opacity: 1;
+        }
+
+        /* ====== 熱點位置定位 (使用百分比以適應不同螢幕) ====== */
+        
+        /* 1. 男孩頭 (需戴安全帽) */
+        #spot-helmet {
+            top: 20%;
+            left: 27%;
+            width: 18%;
+            height: 25%;
+        }
+
+        /* 2. 小女孩 (不得載人) */
+        #spot-passenger {
+            top: 26%;
+            left: 47%;
+            width: 18%;
+            height: 28%;
+        }
+
+        /* 3. 身分證 (需年滿14歲) */
+        #spot-age {
+            top: 61%;
+            left: 29%;
+            width: 13%;
+            height: 12%;
+        }
+
+        /* 4. 時速表 (需低於25) */
+        #spot-speed {
+            top: 48%;
+            left: 4%;
+            width: 17%;
+            height: 18%;
+        }
+
+
+        /* 按鈕區域 */
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button.secondary {
+            background-color: #2196F3;
+        }
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+
+        /* 勝利訊息遮罩 */
+        #win-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: popIn 0.3s;
+        }
+
+        .modal-content h2 {
+            color: #4CAF50;
+            margin: 0 0 20px 0;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>大家來找碴：微型電動二輪車篇</h1>
+    <p class="description">小明騎著微電車載小美出去玩，咦，但好像有點怪怪的，你能找出不符法規的地方嗎?</p>
+
+    <div class="game-container">
+        <img src="elecBg.jpg" alt="微電車情境圖" class="game-bg">
+
+        <div class="hotspot" id="spot-helmet" onclick="checkAnswer(this)">
+            <div class="circle"></div>
+            <div class="answer-box">騎微電車需戴安全帽</div>
+        </div>
+
+        <div class="hotspot" id="spot-passenger" onclick="checkAnswer(this)">
+            <div class="circle"></div>
+            <div class="answer-box">騎微電車不得載人</div>
+        </div>
+
+        <div class="hotspot" id="spot-age" onclick="checkAnswer(this)">
+            <div class="circle"></div>
+            <div class="answer-box">需年滿14歲</div>
+        </div>
+
+        <div class="hotspot" id="spot-speed" onclick="checkAnswer(this)">
+            <div class="circle"></div>
+            <div class="answer-box">需低於時速25</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="secondary" onclick="showAllAnswers()">顯示答案</button>
+        <button onclick="resetGame()">再玩一次</button>
+    </div>
+
+    <div id="win-modal">
+        <div class="modal-content">
+            <h2>🎉 你很厲害都答對了！</h2>
+            <button onclick="closeModal()">關閉</button>
+        </div>
+    </div>
+
+    <script>
+        // 總共有幾個答案
+        const totalAnswers = 4;
+        let foundCount = 0;
+        // 標記是否已經因為"顯示答案"按鈕而結束遊戲，避免重複觸發勝利訊息
+        let isRevealedMode = false;
+
+        function checkAnswer(element) {
+            // 如果已經被點選過，就不做任何事 (不要消失)
+            if (element.classList.contains('active')) {
+                return;
+            }
+
+            // 顯示圈圈與對話框
+            element.classList.add('active');
+            
+            // 增加計數
+            foundCount++;
+
+            // 檢查是否全部答對 (只有在非"顯示答案模式"下才跳出視窗)
+            if (foundCount === totalAnswers && !isRevealedMode) {
+                setTimeout(() => {
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 500); // 稍微延遲讓玩家看到最後一個圈圈
+            }
+        }
+
+        function showAllAnswers() {
+            const hotspots = document.querySelectorAll('.hotspot');
+            isRevealedMode = true; // 開啟揭示模式，阻止勝利彈窗
+
+            hotspots.forEach(spot => {
+                if (!spot.classList.contains('active')) {
+                    spot.classList.add('active');
+                }
+            });
+            // 這裡不顯示 "你很厲害" 對話框
+        }
+
+        function resetGame() {
+            const hotspots = document.querySelectorAll('.hotspot');
+            hotspots.forEach(spot => {
+                spot.classList.remove('active');
+            });
+            foundCount = 0;
+            isRevealedMode = false;
+            document.getElementById('win-modal').style.display = 'none';
+        }
+
+        function closeModal() {
+            document.getElementById('win-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
