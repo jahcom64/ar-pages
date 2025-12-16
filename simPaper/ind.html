@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汽車隔熱紙透光度模擬器</title>
+    <style>
+        /* 基礎樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 模擬視窗樣式 */
+        .car-view {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 比例 (高/寬) */
+            overflow: hidden;
+            margin-bottom: 25px;
+            border: 5px solid #333;
+            border-radius: 5px;
+        }
+
+        #outside-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.5s ease;
+        }
+
+        /* 隔熱紙覆蓋層樣式 */
+        #tint-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 控制面板樣式 */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .control-group {
+            flex: 1 1 300px;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        /* 按鈕組通用樣式 */
+        .scene-btn, .color-btn {
+            border: 3px solid transparent;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .scene-btn.active, .color-btn.active {
+            border-color: #007bff;
+        }
+
+        /* 場景選擇按鈕特殊樣式 */
+        .scene-btn {
+            background-color: #ccc;
+            color: #333;
+            font-weight: bold;
+        }
+        .scene-btn:hover:not(.active) {
+            background-color: #ddd;
+        }
+        .scene-btn.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* 隔熱紙顏色按鈕 */
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            /* 顏色由內聯樣式定義，用於預覽 */
+        }
+        
+        /* 夜間模式樣式 */
+        .night-mode #outside-view {
+            filter: brightness(0.2) contrast(1.2) grayscale(0.1);
+        }
+        .night-mode .car-view {
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🚗 汽車隔熱紙透光度模擬器</h1>
+        <p>請調整滑桿和選項，模擬不同條件下觀看車外景色的影響。</p>
+
+        <div class="car-view" id="car-window">
+            <img id="outside-view" src="bg1.jpg" alt="車外景色">
+            
+            <div id="tint-overlay"></div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>選擇底圖場景：</label>
+                <button class="scene-btn active" data-filename="bg1.jpg">場景 1</button>
+                <button class="scene-btn" data-filename="bg2.jpg">場景 2</button>
+                <button class="scene-btn" data-filename="bg3.jpg">場景 3</button>
+            </div>
+            
+            <div class="control-group">
+                <label for="transparency-slider">
+                    透光度 (VLT): <span id="transparency-value">50%</span>
+                </label>
+                <input type="range" id="transparency-slider" min="5" max="80" value="50">
+            </div>
+
+            <div class="control-group">
+                <label>環境模式：</label>
+                <button id="day-mode-btn" style="background-color: #ffc107;">☀️ 日間模式</button>
+                <button id="night-mode-btn" style="background-color: #007bff; color: white;">🌙 夜間模式</button>
+            </div>
+
+            <div class="control-group">
+                <label>隔熱紙顏色：</label>
+                <button class="color-btn active" data-color="black" style="background-color: black;"></button>
+                <button class="color-btn" data-color="blue" style="background-color: #000033;"></button>
+                <button class="color-btn" data-color="green" style="background-color: #001a00;"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const slider = document.getElementById('transparency-slider');
+        const overlay = document.getElementById('tint-overlay');
+        const outsideView = document.getElementById('outside-view');
+        const valueDisplay = document.getElementById('transparency-value');
+        const carWindow = document.getElementById('car-window');
+        const dayModeBtn = document.getElementById('day-mode-btn');
+        const nightModeBtn = document.getElementById('night-mode-btn');
+        const colorButtons = document.querySelectorAll('.color-btn');
+        const sceneButtons = document.querySelectorAll('.scene-btn'); // 新增：場景按鈕
+
+        /**
+         * 函數：根據透光度更新隔熱紙的不透明度
+         */
+        function updateTint() {
+            const transparency = slider.value;
+            
+            // 1. 更新顯示數值
+            valueDisplay.textContent = transparency + '%';
+
+            // 2. 計算覆蓋層的不透明度 (opacity)
+            const opacity = 1 - (transparency / 100);
+            
+            // 3. 應用到 CSS
+            overlay.style.opacity = opacity;
+        }
+
+        /**
+         * 函數：切換底圖場景
+         */
+        function selectScene(filename, btn) {
+            // 移除所有場景按鈕的 active 狀態
+            sceneButtons.forEach(b => b.classList.remove('active'));
+            // 設定當前按鈕 active 狀態
+            btn.classList.add('active');
+
+            // 更改圖片的 src
+            outsideView.src = filename;
+            outsideView.alt = `車外景色: ${filename}`;
+        }
+
+        /**
+         * 函數：切換日/夜間模式
+         */
+        function setEnvironmentMode(mode) {
+            if (mode === 'night') {
+                carWindow.classList.add('night-mode');
+                nightModeBtn.style.backgroundColor = '#0056b3';
+                dayModeBtn.style.backgroundColor = '#ffc107';
+            } else {
+                carWindow.classList.remove('night-mode');
+                dayModeBtn.style.backgroundColor = '#e0a800';
+                nightModeBtn.style.backgroundColor = '#007bff';
+            }
+        }
+
+        /**
+         * 函數：選擇隔熱紙顏色
+         */
+        function selectColor(color, btn) {
+            colorButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            let overlayColor;
+            switch (color) {
+                case 'blue':
+                    overlayColor = 'rgba(0, 0, 51, 1)'; // 深藍
+                    break;
+                case 'green':
+                    overlayColor = 'rgba(0, 26, 0, 1)'; // 深綠
+                    break;
+                case 'black':
+                default:
+                    overlayColor = 'black'; // 標準黑
+                    break;
+            }
+            overlay.style.backgroundColor = overlayColor;
+        }
+
+        // --- 事件監聽 ---
+
+        // 監聽透光度滑桿的改變
+        slider.addEventListener('input', updateTint);
+
+        // 監聽場景選擇按鈕
+        sceneButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filename = btn.getAttribute('data-filename');
+                selectScene(filename, btn);
+            });
+        });
+
+        // 監聽日夜間模式按鈕
+        dayModeBtn.addEventListener('click', () => setEnvironmentMode('day'));
+        nightModeBtn.addEventListener('click', () => setEnvironmentMode('night'));
+
+        // 監聽顏色按鈕
+        colorButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const color = btn.getAttribute('data-color');
+                selectColor(color, btn);
+            });
+        });
+
+        // 初始狀態設定
+        updateTint();
+        setEnvironmentMode('day');
+        // 初始化顏色按鈕 active 狀態
+        selectColor('black', document.querySelector('.color-btn[data-color="black"]')); 
+    </script>
+
+</body>
+</html>
