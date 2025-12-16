@@ -27,6 +27,7 @@ body {
     height: 10%;
     /* 為了方便除錯可以加上背景色，完成後應移除或設為透明 */
     /* background-color: rgba(255, 0, 0, 0.3); */ 
+    background-color: rgba(255, 0, 0, 0.3);
     cursor: pointer;
     z-index: 10; /* 確保熱區在圖片上方 */
 }
