@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微電車法規 大家來找碴 (測驗模式)</title>
+    <title>微電車法規 大家來找碴 (通關模式)</title>
     <style>
         /* 網頁基本設定 */
         body {
@@ -12,10 +12,25 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* 讓內容從上方開始 */
             align-items: center;
             min-height: 100vh;
             background-color: #f0f0f0;
+        }
+
+        /* 標題和說明文字樣式 */
+        .header-text {
+            max-width: 800px;
+            width: 90%;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         /* 控制按鈕區塊 */
@@ -56,25 +71,29 @@
             position: relative;
             width: 800px;
             max-width: 90%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            /* 設置您指定的背景圖片 */
+            background-image: url('elecBg.jpg'); 
+            background-size: cover;
+            background-position: center;
         }
 
-        /* 原始圖片 */
+        /* 圖片元素 (放置您的主圖片，用於定位熱點) */
         .image-container img {
             display: block;
             width: 100%;
             height: auto;
+            /* 將圖片半透明，讓背景圖片顯示出來 (如果需要) */
+            /* opacity: 0.9; */
         }
 
-        /* 熱點區域的基本樣式 */
+        /* 熱點區域的基本樣式 (無邊框，點擊時無視覺回饋) */
         .hotspot {
             position: absolute;
             cursor: pointer;
             border-radius: 50%;
             box-sizing: border-box;
             background-color: transparent;
-            /* 隱藏熱點邊框，除非需要除錯 */
-            /* border: 3px solid rgba(0, 0, 0, 0.2); */
         }
         
         /* 熱點 1：男孩頭部 (安全帽) */
@@ -102,7 +121,7 @@
             
             padding: 15px;
             border-radius: 50%; 
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             text-align: center;
             font-weight: bold;
             line-height: 1.5;
@@ -137,21 +156,43 @@
             visibility: visible;
         }
 
+        /* 通關訊息樣式 */
+        #completion-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 3em;
+            font-weight: bold;
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+        }
+
     </style>
 </head>
 <body>
 
+    <div class="header-text">
+        小明騎著微電車載小美出去玩，咦，但好像有點怪怪的，你能找出不符法規的地方嗎?
+    </div>
+
     <div class="controls">
         <button id="show-answer-btn" onclick="showAllPopups()">顯示答案</button>
-        <button id="reset-btn" onclick="hideAllPopups()">再測驗一次</button>
+        <button id="reset-btn" onclick="resetTest()">再測驗一次</button>
     </div>
 
     <div class="image-container">
-        <img src="elecBg.jpg" alt="微電車安全宣導圖片">
+        <img src="Gemini_Generated_Image_mmmdkimmmdkimmmd.jpg" alt="微電車安全宣導圖片">
 
-        <div class="hotspot" id="hotspot-boy" onclick="showPopup('popup-boy')"></div>
+        <div class="hotspot" id="hotspot-boy" onclick="showPopup('popup-boy', 'hotspot-boy')"></div>
 
-        <div class="hotspot" id="hotspot-girl" onclick="showPopup('popup-girl')"></div>
+        <div class="hotspot" id="hotspot-girl" onclick="showPopup('popup-girl', 'hotspot-girl')"></div>
 
         <div class="popup" id="popup-boy">
             騎微電車<br>**需戴安全帽**
@@ -163,18 +204,49 @@
 
     </div>
 
+    <div id="completion-message">
+        恭喜您全部答對了!!
+    </div>
+
     <script>
+        // 全局變數：總共有幾個錯誤 (熱點)
+        const TOTAL_MISTAKES = 2;
+        // 全局變數：已答對的錯誤數量
+        let correctCount = 0;
+
         // 獲取所有提示框元素
         const popups = document.querySelectorAll('.popup');
 
         /**
-         * 函數：顯示單一提示框 (點擊熱點時呼叫)
-         * - 由於需求是不再隱藏，因此我們直接添加 'visible' 類別。
+         * 函數：顯示單一提示框並檢查通關
+         * @param {string} popupId - 提示框的 ID
+         * @param {string} hotspotId - 熱點的 ID
          */
-        function showPopup(popupId) {
+        function showPopup(popupId, hotspotId) {
             const popup = document.getElementById(popupId);
-            // 點擊後，直接將它設置為顯示狀態
-            popup.classList.add('visible');
+            const hotspot = document.getElementById(hotspotId);
+
+            // 只有當提示框尚未顯示時，才計數
+            if (!popup.classList.contains('visible')) {
+                popup.classList.add('visible'); // 顯示提示框
+                correctCount++; // 計數增加
+                
+                // 禁用已點擊的熱點，防止重複點擊和重複計數
+                hotspot.style.pointerEvents = 'none';
+                hotspot.style.cursor = 'default';
+
+                // 檢查是否已全部答對
+                if (correctCount === TOTAL_MISTAKES) {
+                    showCompletionMessage();
+                }
+            }
+        }
+        
+        /**
+         * 函數：顯示通關訊息
+         */
+        function showCompletionMessage() {
+            document.getElementById('completion-message').style.display = 'flex';
         }
 
         /**
@@ -184,21 +256,36 @@
             popups.forEach(popup => {
                 popup.classList.add('visible');
             });
-            alert('答案已顯示！');
+            // 啟用所有熱點（如果顯示答案，計數功能失效）
+            document.getElementById('hotspot-boy').style.pointerEvents = 'none';
+            document.getElementById('hotspot-girl').style.pointerEvents = 'none';
+            // 由於點了答案，就不再彈出通關訊息
+            document.getElementById('completion-message').style.display = 'none';
         }
 
         /**
-         * 函數：隱藏所有提示框 (點擊「再測驗一次」時呼叫)
+         * 函數：重置測驗 (點擊「再測驗一次」時呼叫)
          */
-        function hideAllPopups() {
+        function resetTest() {
+            // 隱藏所有提示框
             popups.forEach(popup => {
                 popup.classList.remove('visible');
             });
-            alert('所有答案已清除，請重新開始測驗！');
+
+            // 重置計數器
+            correctCount = 0;
+            
+            // 重新啟用所有熱點
+            document.getElementById('hotspot-boy').style.pointerEvents = 'auto';
+            document.getElementById('hotspot-boy').style.cursor = 'pointer';
+            document.getElementById('hotspot-girl').style.pointerEvents = 'auto';
+            document.getElementById('hotspot-girl').style.cursor = 'pointer';
+
+            // 隱藏通關訊息
+            document.getElementById('completion-message').style.display = 'none';
+
+            alert('測驗已重置，請找出不符法規的地方！');
         }
-        
-        // 額外功能：點擊提示框以外的區域不再影響提示框狀態，
-        // 使用者只能透過點擊熱點或「再測驗一次」來控制。
         
     </script>
 
