@@ -3,30 +3,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const clues = document.querySelectorAll('.clue');
     const showAllBtn = document.getElementById('show-all-btn');
     const resetBtn = document.getElementById('reset-btn');
-    const mainImage = document.getElementById('main-image');
     
-    // 用來追蹤已經找到的答案數量
     let foundCount = 0;
     const totalClues = clues.length;
-    let cluesFound = {}; // 追蹤每個答案是否被找到
+    let cluesFound = {}; 
 
-    // 初始化所有答案的追蹤狀態為 false
+    // 初始化所有答案的追蹤狀態
     clues.forEach(clue => {
         cluesFound[clue.id] = false;
     });
 
     /**
-     * 點擊熱區的處理函式
-     * @param {string} clueId - 答案提示的 ID (例如: 'clue-boy')
+     * 處理點擊，移動提示框到熱區的位置
      */
-    function handleHotspotClick(clueId) {
+    function handleHotspotClick(hotspotElement) {
+        // 1. 根據熱區 ID 取得對應的提示框 ID
+        let clueId;
+        if (hotspotElement.id === 'hotspot-boy') clueId = 'clue-boy';
+        else if (hotspotElement.id === 'hotspot-girl') clueId = 'clue-girl';
+        else if (hotspotElement.id === 'hotspot-id') clueId = 'clue-id';
+        else if (hotspotElement.id === 'hotspot-speed') clueId = 'clue-speed';
+
+        if (!clueId) return;
+
         const clueElement = document.getElementById(clueId);
-        
-        // 點擊後顯示答案
-        if (clueElement && clueElement.classList.contains('hidden')) {
-            clueElement.classList.remove('hidden');
+
+        // 2. 獲取熱區的位置 (以百分比表示)
+        const hotspotStyle = window.getComputedStyle(hotspotElement);
+        const leftPercent = hotspotStyle.left;
+        const topPercent = hotspotStyle.top;
+
+        // 3. 設定提示框的位置，讓它與熱區重疊
+        if (clueElement && !clueElement.classList.contains('show')) {
+            clueElement.style.left = leftPercent;
+            clueElement.style.top = topPercent;
             
-            // 檢查是否是第一次找到這個答案
+            // 4. 顯示提示框
+            clueElement.classList.add('show');
+            clueElement.classList.remove('hidden'); // 確保覆蓋 hidden 屬性
+
+            // 5. 檢查答案狀態
             if (cluesFound[clueId] === false) {
                 cluesFound[clueId] = true;
                 foundCount++;
@@ -39,47 +55,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        // 根據您的要求 6: 點到答案後，不論再點哪裡都不要消失，所以這裡不需寫隱藏邏輯。
     }
 
     // 1. 綁定所有熱區的點擊事件
     hotspots.forEach(hotspot => {
         hotspot.addEventListener('click', () => {
-            // 透過 ID 映射找到對應的答案提示 ID
-            let clueId;
-            if (hotspot.id === 'hotspot-boy') clueId = 'clue-boy';
-            else if (hotspot.id === 'hotspot-girl') clueId = 'clue-girl';
-            else if (hotspot.id === 'hotspot-id') clueId = 'clue-id';
-            else if (hotspot.id === 'hotspot-speed') clueId = 'clue-speed';
-
-            if (clueId) {
-                handleHotspotClick(clueId);
-            }
+            handleHotspotClick(hotspot);
         });
     });
 
     // 4. 顯示所有答案按鈕
     showAllBtn.addEventListener('click', () => {
-        clues.forEach(clue => {
-            if (clue.classList.contains('hidden')) {
-                clue.classList.remove('hidden');
-            }
-        });
-        // 更新追蹤狀態，視為都已找到
-        foundCount = totalClues;
-        clues.forEach(clue => cluesFound[clue.id] = true);
+        hotspots.forEach(hotspot => handleHotspotClick(hotspot));
         
-        // 顯示完後一樣跳出提示
-        setTimeout(() => {
-            alert("你很厲害都答對了！恭喜找出所有不符法規的地方。");
-        }, 50);
+        // 確保找到提示只執行一次
+        if (foundCount < totalClues) {
+             setTimeout(() => {
+                alert("你很厲害都答對了！恭喜找出所有不符法規的地方。");
+            }, 50);
+        }
     });
 
     // 5. 再玩一次按鈕
     resetBtn.addEventListener('click', () => {
         // 隱藏所有答案
         clues.forEach(clue => {
-            clue.classList.add('hidden');
+            clue.classList.remove('show');
+            clue.classList.add('hidden'); // 確保恢復 hidden 狀態
         });
         // 重置追蹤狀態
         foundCount = 0;
