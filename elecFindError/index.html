@@ -146,7 +146,14 @@
             width: 17%;
             height: 18%;
         }
-
+        
+        /* 5. 未掛號牌 */
+        #spot-noplate {
+            top: 56%;
+            left: 47%;
+            width: 18%;
+            height: 18%;
+        }
 
         /* 按鈕區域 */
         .controls {
@@ -234,12 +241,12 @@
 
         <div class="hotspot" id="spot-helmet" onclick="checkAnswer(this)">
             <div class="circle"></div>
-            <div class="answer-box">騎微電車需戴安全帽</div>
+            <div class="answer-box">需戴安全帽</div>
         </div>
 
         <div class="hotspot" id="spot-passenger" onclick="checkAnswer(this)">
             <div class="circle"></div>
-            <div class="answer-box">騎微電車不得載人</div>
+            <div class="answer-box">不得載人</div>
         </div>
 
         <div class="hotspot" id="spot-age" onclick="checkAnswer(this)">
@@ -251,6 +258,11 @@
             <div class="circle"></div>
             <div class="answer-box">需低於時速25</div>
         </div>
+        
+        <div class="hotspot" id="spot-noplate" onclick="checkAnswer(this)">
+            <div class="circle"></div>
+            <div class="answer-box">未領用合格號牌</div>
+        </div>
     </div>
 
     <div class="controls">
@@ -260,14 +272,14 @@
 
     <div id="win-modal">
         <div class="modal-content">
-            <h2>🎉 你很厲害都答對了！</h2>
+            <h2>🎉 你很厲害都答對了！感謝你拯救了小明的愛情！</h2>
             <button onclick="closeModal()">關閉</button>
         </div>
     </div>
 
     <script>
         // 總共有幾個答案
-        const totalAnswers = 4;
+        const totalAnswers = 5;
         let foundCount = 0;
         // 標記是否已經因為"顯示答案"按鈕而結束遊戲，避免重複觸發勝利訊息
         let isRevealedMode = false;
