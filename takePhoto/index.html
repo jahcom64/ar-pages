@@ -1,3 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>手機照片貼圖合成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        :root { --primary: #4a90e2; --success: #2ecc71; --danger: #e74c3c; }
+        body { font-family: -apple-system, sans-serif; background: #f8f9fa; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        /* 標題與按鈕區 */
+        header { width: 100%; padding: 15px; text-align: center; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-group { display: flex; gap: 8px; padding: 15px; flex-wrap: wrap; justify-content: center; }
+        button { border: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-upload { background: var(--primary); color: white; }
+        .btn-download { background: var(--success); color: white; }
+        .btn-share { background: #8e44ad; color: white; }
+        
+        /* 畫布容器 */
+        #canvas-wrapper { background: #ddd; margin: 10px auto; border-radius: 8px; overflow: hidden; line-height: 0; }
+        
+        /* 貼圖選單 */
+        .sticker-label { font-size: 14px; color: #666; margin-top: 10px; }
+        .sticker-bank { display: flex; gap: 12px; overflow-x: auto; width: 90%; padding: 15px; -webkit-overflow-scrolling: touch; }
+        .sticker-bank img { width: 70px; height: 70px; background: white; border-radius: 8px; border: 2px solid transparent; flex-shrink: 0; object-fit: contain; }
+        .sticker-bank img:active { border-color: var(--primary); transform: scale(0.9); }
+    </style>
+</head>
+<body>
+
+<header><h3>📷 相片裝飾工坊</h3></header>
+
+<div class="btn-group">
+    <input type="file" id="upload-photo" accept="image/*" style="display:none">
+    <button class="btn-upload" onclick="document.getElementById('upload-photo').click()">📸 拍/選照片</button>
+    <button id="download-btn" class="btn-download">💾 儲存</button>
+    <button id="share-btn" class="btn-share">📤 分享</button>
+</div>
+
+<div id="canvas-wrapper">
+    <canvas id="c"></canvas>
+</div>
+
+<div class="sticker-label">👇 點擊下方貼圖放入照片：</div>
+<div class="sticker-bank" id="sticker-list">
+    <img src="https://cdn-icons-png.flaticon.com/512/1350/1350215.png" onclick="addSticker(this.src)">
+    <img src="https://cdn-icons-png.flaticon.com/512/3209/3209865.png" onclick="addSticker(this.src)">
+    <img src="https://cdn-icons-png.flaticon.com/512/616/616430.png" onclick="addSticker(this.src)">
+    <img src="https://cdn-icons-png.flaticon.com/512/1042/1042680.png" onclick="addSticker(this.src)">
+</div>
+
+<script>
 const canvas = new fabric.Canvas('c');
     let originalWidth = 0; // 用於紀錄原始照片寬度
 
@@ -88,3 +141,7 @@ const canvas = new fabric.Canvas('c');
             alert('瀏覽器不支援分享，請使用儲存功能。');
         }
     };
+</script>
+
+</body>
+</html>
