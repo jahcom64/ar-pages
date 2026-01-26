@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>車輛過戶流程辦理清單</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0;
+            background-color: transparent;
+            font-family: -apple-system, "Microsoft JhengHei", sans-serif;
+            height: auto;
+        }
+        
+        #main-wrapper {
+            padding: 10px;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .card { 
+            background: white; padding: 25px; border-radius: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #eee;
+        }
+
+        h2 { color: #1a73e8; text-align: center; margin-bottom: 25px; font-size: 26px; margin-top: 0; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 18px; color: #333; }
+        
+        select, input {
+            width: 100%; padding: 15px; border: 1px solid #ccc; border-radius: 10px; 
+            font-size: 18px; box-sizing: border-box; background-color: #f9f9f9;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+        }
+        
+        .input-error { 
+            border: 2px solid #d93025 !important; 
+            background-color: #fff2f2 !important; 
+        }
+
+        button {
+            width: 100%; background: #1a73e8; color: white; border: none; padding: 18px; 
+            border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        button:active { background: #1557b0; }
+
+        #result { margin-top: 25px; display: none; }
+        .step-item { background: #fffbe6; border-left: 6px solid #ffc107; padding: 18px; margin-bottom: 12px; border-radius: 8px; font-size: 18px; line-height: 1.6; }
+        .alert-box { background: #fee; border-left: 6px solid #d93025; color: #b71c1c; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 18px; }
+        .info-box { background: #e8f0fe; border-left: 6px solid #1a73e8; padding: 18px; border-radius: 8px; font-size: 18px; margin-top: 20px; line-height: 1.7; }
+        
+        .must, .red-bold { color: #d93025; font-weight: bold; }
+        .sub-hint { font-size: 14px; color: #666; margin-top: 5px; }
+        
+        #errorMsg { color: #d93025; font-size: 15px; display: none; margin-top: 8px; font-weight: bold; }
+
+        /* 新增：預約按鈕樣式 */
+        .btn-reserve {
+            display: inline-block;
+            background: #34a853;
+            color: white !important;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 16px;
+            margin-top: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-reserve:active { background: #2d8e47; }
+    </style>
+</head>
+<body>
+
+<div id="main-wrapper">
+    <div class="card">
+        <h2>🚗 車輛過戶流程辦理清單</h2>
+        
+        <div class="form-group">
+            <label>1. 是否有動保設定 (貸款)？</label>
+            <select id="mortgage">
+                <option value="no">否 (無貸款或已清償)</option>
+                <option value="yes">是 (貸款中或尚未塗銷)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>2. 選擇車種</label>
+            <select id="type">
+                <option value="car">汽車</option>
+                <option value="motor_small">機車 (150cc以下)</option>
+                <option value="motor_large">機車 (151cc以上)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>3. 出廠年月 (西元)</label>
+            <input type="number" id="yearMonth" placeholder="例如: 201501" inputmode="numeric">
+            <div id="errorMsg">⚠️ 請輸入正確格式（如 201501）</div>
+            <div class="sub-hint">* 西元 6 位數，如 201501</div>
+        </div>
+
+        <div class="form-group">
+            <label>4. 近期是否有<span class="red-bold">過戶臨檢</span>或<span class="red-bold">定期檢驗</span>？</label>
+            <div class="sub-hint">(代檢廠或監理單位檢驗 / 汽車近3個月、機車近4個月)</div>
+            <select id="inspected">
+                <option value="no">否 (超過期限或未檢驗)</option>
+                <option value="yes">是 (期限內已檢驗)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>5. <span class="red-bold">新車主</span>是否已投保強制險？</label>
+            <select id="insurance">
+                <option value="no">否 (尚未投保或效期不足30天)</option>
+                <option value="yes">是 (已投保且效期30天以上)</option>
+            </select>
+        </div>
+
+        <button onclick="checkProcess()">生成辦理清單</button>
+
+        <div id="result">
+            <h3 id="resultTitle" style="border-bottom: 2px solid #eee; padding-bottom: 10px; color: #1a73e8;">📋 辦理步驟：</h3>
+            <div id="steps"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const wrapper = document.getElementById('main-wrapper');
+const resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+        const height = entry.target.offsetHeight + 40;
+        window.parent.postMessage(height, "*");
+    }
+});
+resizeObserver.observe(wrapper);
+
+function checkProcess() {
+    const ymField = document.getElementById('yearMonth');
+    const errField = document.getElementById('errorMsg');
+    const ymInput = ymField.value;
+    const mortgage = document.getElementById('mortgage').value;
+    const type = document.getElementById('type').value;
+    const inspected = document.getElementById('inspected').value;
+    const insurance = document.getElementById('insurance').value;
+    const stepsDiv = document.getElementById('steps');
+    const resultDiv = document.getElementById('result');
+    const resultTitle = document.getElementById('resultTitle');
+
+    ymField.classList.remove('input-error');
+    errField.style.display = "none";
+    resultDiv.style.display = "none";
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    let isValid = true;
+    const inYear = parseInt(ymInput.substring(0, 4));
+    const inMonth = parseInt(ymInput.substring(4, 6));
+
+    if (ymInput.length !== 6 || isNaN(inYear) || isNaN(inMonth) || inMonth < 1 || inMonth > 12 || inYear > currentYear) {
+        isValid = false;
+    }
+
+    if (!isValid) {
+        ymField.classList.add('input-error');
+        errField.style.display = "block";
+        ymField.focus();
+        return; 
+    }
+
+    if (mortgage === "yes") {
+        resultTitle.innerText = "❌ 無法辦理過戶";
+        stepsDiv.innerHTML = `<div class="alert-box">你的愛車目前有「動保設定」中！<br><br>請先向貸款銀行/融資公司申請清償證明，確認監理系統已完成塗銷後再行辦理。</div>`;
+        resultDiv.style.display = "block";
+        return;
+    }
+
+    const totalMonthsDiff = (currentYear * 12 + currentMonth) - (inYear * 12 + inMonth);
+    let needInspect = false;
+    let termText = "";
+    let laneInfo = "";
+
+    // 預約按鈕 HTML 模板
+    const reserveBtn = `<br><a href="https://gov.tw/RMq" target="_blank" class="btn-reserve">📅 點此預約臨時檢驗</a>`;
+
+    if (type === "car") {
+        if (totalMonthsDiff > 120 && inspected === "no") { 
+            needInspect = true; 
+            termText = "10"; 
+            laneInfo = `請開車至本站 1 樓第 2 車道車輛檢驗區。${reserveBtn}`;
+        }
+    } else {
+        if (totalMonthsDiff > 60 && inspected === "no") { 
+            needInspect = true; 
+            termText = "5"; 
+            laneInfo = `請騎機車至本站 1 樓第 3 車道車輛檢驗區。${reserveBtn}`;
+        }
+    }
+
+    resultTitle.innerText = "📋 辦理步驟：";
+    let html = "";
+    let stepCount = 1;
+
+    // 步驟 1：保險
+    if (insurance === "no") {
+        let insuranceHtml = `<div class="step-item"><b>第 ${stepCount++} 步：【保險】</b><br><span class="must">新車主</span>名義需先完成投保，且效期須大於 30 日。<br>`;
+        if (type !== "car") {
+            insuranceHtml += `如經舊車主同意者，可至服務中心索取<span class="red-bold">強制險移轉單</span>。<br>`;
+        }
+        insuranceHtml += `若未投保，可洽詢本站 2 樓駐站保險櫃檯。</div>`;
+        html += insuranceHtml;
+    }
+
+    // 步驟 2：驗車
+    if (needInspect) {
+        html += `<div class="step-item"><b>第 ${stepCount++} 步：【驗車】</b><br>因車齡已超過 ${termText} 年且近期未檢驗，須辦理<span class="must">臨時檢驗</span>。<br><span class="red-bold">${laneInfo}</span></div>`;
+    }
+
+    // 步驟 3：查稅
+    if (type === "car" || type === "motor_large") {
+        html += `<div class="step-item"><b>第 ${stepCount++} 步：【查稅】</b><br>請至 <span class="red-bold">2 樓地方稅務局櫃檯</span> 抽取號碼牌，取得<span class="must">牌照稅查欠連繫單</span>。</div>`;
+    }
+
+    // 步驟 4：送件
+    html += `<div class="step-item"><b>第 ${stepCount++} 步：【送件】</b><br><span class="red-bold">*注意：過戶前應先繳清違規欠稅</span><br>至 <span class="red-bold">2 樓抽單處或服務中心</span>，抽取「單一窗口」號碼牌辦理過戶。</div>`;
+    
+    html += `<div class="info-box"><b>💡 應備證件(繼承過戶除外)：</b><br>
+    1. 買賣雙方雙證件<br>
+    2. 雙方印章<br>
+    3. 原車行照正本及新領牌照登記書 (若遺失請先告知申辦櫃台)<br>
+    4. 以新車主名義投保的強制險證<br>
+    5. 代辦人身分證</div>`;
+
+    stepsDiv.innerHTML = html;
+    resultDiv.style.display = "block";
+}
+</script>
+</body>
+</html>
