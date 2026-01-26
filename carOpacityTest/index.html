@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>汽車透光率挑戰賽 - 全速版</title>
+    <style>
+        :root { --primary-color: #4CAF50; --taxi-yellow: #FFD600; --error-color: #f44336; }
+        body { font-family: "Microsoft JhengHei", sans-serif; text-align: center; background: #eceff1; margin: 0; padding: 5px; touch-action: none; overflow: hidden; }
+        .container { display: flex; flex-direction: column; align-items: center; width: 100%; max-height: 100vh; }
+        #timer-box { font-size: 1.2rem; font-weight: bold; color: #333; margin: 5px 0; background: #fff; padding: 5px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .timer-running { color: #f44336 !important; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.8; } }
+        .mode-switch { margin-bottom: 8px; display: flex; gap: 8px; justify-content: center; }
+        .mode-btn { padding: 8px 16px; font-weight: bold; border: 2px solid #ccc; border-radius: 8px; cursor: pointer; background: #fff; font-size: 0.9rem; }
+        .active-normal { background: var(--primary-color) !important; color: white !important; }
+        .active-taxi { background: var(--taxi-yellow) !important; color: #333 !important; }
+        .car-map { position: relative; width: 95%; max-width: 480px; aspect-ratio: 800 / 500; background-color: #ddd; background-repeat: no-repeat; background-position: center; background-size: contain; border-radius: 10px; margin-bottom: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .drop-zone { position: absolute; border: 1.5px dashed rgba(0,0,0,0.6); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; background: rgba(255, 255, 255, 0.6); pointer-events: none; }
+      #windshield { top: 30%; left: 30%; width: 15%; height: 25%; transform: rotate(20deg); } 
+        #front-side  { top: 32%; left: 54%; width: 10%; height: 15%; transform: skewX(-25deg); } 
+        #rear-side   { top: 25%; left: 68%; width: 8%; height: 15%; transform: skewX(-20deg); } 
+        #back-windshield { top: 0%; left: 70%; width: 4%; height:25%; transform: rotate(-50deg); } 
+        .label-container { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+        .draggable { padding: 12px 18px; background: #455a64; color: white; border-radius: 50px; font-weight: bold; font-size: 0.9rem; touch-action: none; z-index: 100; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        #message { height: 45px; margin: 5px 0; font-weight: bold; font-size: 1rem; }
+        .success { color: #2e7d32; } .error { color: var(--error-color); }
+        .reload-btn { padding: 8px 18px; border-radius: 8px; cursor: pointer; background: #fff; border: 2px solid #999; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" preload="auto"></audio>
+    <audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" preload="auto"></audio>
+    <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
+
+    <div class="container">
+        <h2 style="font-size: 1.1rem; margin: 8px 0;">🚗 車輛透光率挑戰賽</h2>
+        <div id="timer-box">挑戰時間：<span id="seconds">0.0</span>s</div>
+        <div class="mode-switch">
+            <button id="btn-normal" class="mode-btn active-normal" onclick="switchMode('normal')">一般汽車</button>
+            <button id="btn-taxi" class="mode-btn" onclick="switchMode('taxi')">計程車</button>
+        </div>
+        <div class="car-map" id="carMap">
+            <div id="windshield" class="drop-zone" data-done="false">前擋窗</div>
+            <div id="front-side" class="drop-zone" data-done="false">前側窗</div>
+            <div id="rear-side" class="drop-zone" data-done="false">後側窗</div>
+            <div id="back-windshield" class="drop-zone" data-done="false">後擋窗</div>
+        </div>
+        <div class="label-container">
+            <div class="draggable" id="70">70% 以上</div>
+            <div class="draggable" id="40">40% 以上</div>
+            <div class="draggable" id="any">不限</div>
+        </div>
+        <div id="message">車窗透光率懂多少～來挑戰</div>
+        <button class="reload-btn" onclick="resetAll()">重新挑戰</button>
+    </div>
+
+    <script>
+        let currentMode = 'normal', startTime, timerInterval, isTimerRunning = false, finishedCount = 0, audioUnlocked = false;
+        const carImages = {
+            normal: 'https://i.meee.com.tw/hzHbQRB.png', // 一般車底圖
+            taxi: 'https://i.meee.com.tw/5utcfHu.png'    // 計程車底圖
+        };
+        const standards = {
+            normal: { windshield: "70", "front-side": "40", "rear-side": "any", "back-windshield": "any" },
+            taxi: { windshield: "70", "front-side": "40", "rear-side": "40", "back-windshield": "40" }
+        };
+        const names = { "windshield":"前擋", "front-side":"前側", "rear-side":"後側", "back-windshield":"後擋" };
+
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            ['snd-correct', 'snd-wrong', 'snd-win'].forEach(id => {
+                const a = document.getElementById(id);
+                a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+            });
+            audioUnlocked = true;
+        }
+
+        function playSound(id) {
+            const s = document.getElementById(id);
+            if (s) { s.currentTime = 0; s.play().catch(() => {}); }
+        }
+
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            startTime = Date.now();
+            document.getElementById('timer-box').classList.add('timer-running');
+            timerInterval = setInterval(() => {
+                document.getElementById('seconds').innerText = ((Date.now() - startTime) / 1000).toFixed(1);
+            }, 100);
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            unlockAudio();
+            document.getElementById('btn-normal').className = mode === 'normal' ? 'mode-btn active-normal' : 'mode-btn';
+            document.getElementById('btn-taxi').className = mode === 'taxi' ? 'mode-btn active-taxi' : 'mode-btn';
+            document.getElementById('carMap').style.backgroundImage = `url('${carImages[mode]}')`;
+            resetAll();
+        }
+
+        function resetAll() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            finishedCount = 0;
+            document.getElementById('seconds').innerText = "0.0";
+            document.getElementById('timer-box').classList.remove('timer-running');
+            document.getElementById('message').innerText = "車窗透光率懂多少～來挑戰";
+            document.getElementById('message').className = "";
+            document.querySelectorAll('.drop-zone').forEach(z => {
+                z.style.background = "rgba(255, 255, 255, 0.6)";
+                z.style.color = "black";
+                z.innerText = names[z.id];
+                z.setAttribute('data-done', 'false');
+            });
+        }
+
+        function checkAnswer(chosenId, targetZone) {
+            // 核心修正：只要玩家進行了判定動作，就開始計時
+            if (!isTimerRunning && finishedCount < 4) {
+                startTimer();
+            }
+
+            if (targetZone.getAttribute('data-done') === 'true') return;
+            const correctId = standards[currentMode][targetZone.id];
+            const msgBox = document.getElementById('message');
+            
+            if (chosenId === correctId) {
+                targetZone.setAttribute('data-done', 'true');
+                finishedCount++;
+                targetZone.style.background = currentMode === 'normal' ? "#4CAF50" : "#FFD600";
+                targetZone.style.color = currentMode === 'normal' ? "white" : "black";
+                targetZone.innerText = document.getElementById(chosenId).innerText;
+
+                if (finishedCount === 4) {
+                    clearInterval(timerInterval);
+                    isTimerRunning = false;
+                    playSound('snd-win');
+                    msgBox.innerHTML = `🏆 挑戰成功！趕快截圖分享到Facebook<br>最終成績：${document.getElementById('seconds').innerText} 秒`;
+                    msgBox.className = "success";
+                    document.getElementById('timer-box').classList.remove('timer-running');
+                } else {
+                    playSound('snd-correct');
+                    msgBox.innerHTML = `✅ 正確！繼續加油`;
+                    msgBox.className = "success";
+                }
+            } else {
+                playSound('snd-wrong');
+                msgBox.innerHTML = `❌ 透光率錯誤！在想一想<br>`;
+                msgBox.className = "error";
+            }
+        }
+
+        document.querySelectorAll('.draggable').forEach(el => {
+            let startX, startY;
+            const onMove = (e) => {
+                e.preventDefault();
+                const t = e.touches ? e.touches[0] : e;
+                el.style.transform = `translate(${t.clientX - startX}px, ${t.clientY - startY}px)`;
+            };
+            const onEnd = (e) => {
+                const t = e.changedTouches ? e.changedTouches[0] : e;
+                el.style.transform = "none";
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    const rect = zone.getBoundingClientRect();
+                    if (t.clientX >= rect.left && t.clientX <= rect.right && t.clientY >= rect.top && t.clientY <= rect.bottom) {
+                        checkAnswer(el.id, zone);
+                    }
+                });
+                window.removeEventListener(e.touches ? 'touchmove' : 'mousemove', onMove);
+                window.removeEventListener(e.touches ? 'touchend' : 'mouseup', onEnd);
+            };
+            const onStart = (e) => {
+                unlockAudio();
+                const t = e.touches ? e.touches[0] : e;
+                startX = t.clientX; startY = t.clientY;
+                window.addEventListener(e.touches ? 'touchmove' : 'mousemove', onMove, { passive: false });
+                window.addEventListener(e.touches ? 'touchend' : 'mouseup', onEnd, {once: true});
+            };
+            el.addEventListener('mousedown', onStart);
+            el.addEventListener('touchstart', onStart, { passive: false });
+        });
+        document.getElementById('carMap').style.backgroundImage = `url('${carImages.normal}')`;
+    </script>
+</body>
+</html>
