@@ -234,7 +234,7 @@
         const scorePart = (score * 10).toString().padStart(3, '0');
         const randomPart = Math.random().toString(36).toUpperCase().substring(2, 5);
         // 修改為純站名 + 代碼
-        return `<span class="cert-station">彰化監理站</span><br>${timePart}-${scorePart}-${randomPart}`;
+        return `${timePart}-${scorePart}-${randomPart}<br><span class="cert-station">彰化監理站</span>`;
     }
 
     function toggleAnalysis() {
@@ -374,4 +374,5 @@
     }
 </script>
 </body>
+
 </html>
