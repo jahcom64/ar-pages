@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            background-color: #ffffff; margin: 0; padding: 10px; height: 100vh;
+        }
+
+        #game-container { 
+            background: linear-gradient(180deg, #1a2e52 0%, #0d172a 100%); 
+            padding: 20px 15px; border-radius: 25px; text-align: center; color: white; 
+            width: 100%; max-width: 400px; border: 1.5px solid rgba(255, 255, 255, 0.1);
+            position: relative; margin-top: 10px;
+        }
+
+        .title-text { font-size: 26px; font-weight: 900; margin-bottom: 15px; letter-spacing: 1.5px; }
+        
+        .info-row { 
+            display: grid; 
+            grid-template-columns: 1.2fr 0.8fr 1fr; 
+            gap: 5px; 
+            margin-bottom: 15px; 
+            background: rgba(0,0,0,0.2);
+            padding: 12px 5px;
+            border-radius: 15px;
+        }
+        .info-label { font-size: 13px; color: #94a3b8; margin-bottom: 6px; display: block; font-weight: bold; }
+        
+        #round-display { font-size: 22px; color: #22d3ee; font-weight: 900; white-space: nowrap; }
+        #timer-count { font-size: 26px; color: #fbbf24; font-weight: 900; transition: all 0.2s; }
+        #score-display { font-size: 26px; color: #34d399; font-weight: 900; }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .urgent { color: #ef4444 !important; animation: shake 0.2s infinite; }
+
+        .hint-text { font-size: 20px; color: #ffbf00; margin: 10px 0; font-weight: 900; min-height: 1.5em; }
+        
+        .light-bar { 
+            background: #0f172a; padding: 12px 8px; border-radius: 18px; 
+            display: flex; gap: 2%; justify-content: center; align-items: center;
+            margin: 5px 0 15px 0; border: 1px solid #1e293b;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.8); width: 100%;
+        }
+        .light { 
+            width: 22%; aspect-ratio: 1 / 1; border-radius: 50%; background: #020617; 
+            border: 2px solid #334155; display: flex; align-items: center; justify-content: center; 
+            font-size: 32px; font-weight: bold; color: transparent;
+        }
+
+        .red.active { background-color: #ef4444; color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+        .green.active-dot { background-color: #22c55e; color: #22c55e; box-shadow: 0 0 15px rgba(34, 197, 94, 0.8); }
+        .green.active-arrow { color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 1); }
+
+        #start-btn, #review-btn { 
+            background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); 
+            width: 100%; padding: 18px; border-radius: 18px; font-size: 22px; 
+            color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+        #review-btn { background: linear-gradient(180deg, #64748b 0%, #334155 100%); font-size: 18px; padding: 12px; }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        button { padding: 15px 5px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 18px; font-weight: bold; }
+        button.correct-part { background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important; border: none; }
+        
+        #result-analysis { 
+            margin-top: 15px; text-align: left; background: rgba(0,0,0,0.4); 
+            padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .analysis-title { color: #f87171; font-weight: bold; margin-bottom: 12px; display: block; border-bottom: 1px solid #f87171; padding-bottom: 5px; }
+        
+        .error-entry { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .error-info { flex-grow: 1; }
+        .ans-tag { font-size: 12px; color: #34d399; display: block; margin-top: 4px; font-weight: bold; }
+        .mini-light-bar { background: #0f172a; padding: 4px; border-radius: 8px; display: flex; gap: 3px; border: 1px solid #1e293b; width: 85px; flex-shrink: 0; }
+        .mini-light { width: 16px; height: 16px; border-radius: 50%; background: #020617; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 8px; }
+
+        #verify-code { 
+            margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); 
+            letter-spacing: 0.5px; border-top: 1px dashed rgba(255,255,255,0.2); 
+            padding-top: 12px; line-height: 1.6;
+        }
+        .cert-station { color: #34d399; font-weight: bold; font-size: 14px; }
+
+        .gone { display: none; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="title-text">號誌挑戰賽</div>
+        
+        <div id="stats-area" class="info-row gone">
+            <div class="info-box"><span class="info-label">挑戰進度</span><div id="round-display">- / 10</div></div>
+            <div class="info-box"><span class="info-label">時間</span><div id="timer-count">0</div></div>
+            <div class="info-box"><span class="info-label">獲得分數</span><div id="score-display">0</div></div>
+        </div>
+
+        <div id="hint" class="hint-text">準備好挑戰了嗎？</div>
+        
+        <div id="light-box" class="light-bar gone">
+            <div id="L-red" class="light red"></div>
+            <div id="L-yellow" class="light yellow"></div>
+            <div id="L-3" class="light green"></div>
+            <div id="L-4" class="light green"></div>
+        </div>
+
+        <button id="start-btn" onclick="handleStartClick()">開始挑戰</button>
+
+        <div id="controls" class="gone">
+            <div class="btn-group">
+                <button id="btn-停止" onclick="check('停止')">停止</button>
+                <button id="btn-直行" onclick="check('直行')">直行</button>
+                <button id="btn-左轉" onclick="check('左轉')">左轉</button>
+                <button id="btn-右轉" onclick="check('右轉')">右轉</button>
+            </div>
+        </div>
+
+        <button id="review-btn" class="gone" onclick="toggleAnalysis()">🔍 查看正確答案</button>
+
+        <div id="result-analysis" class="gone">
+            <span class="analysis-title">⚠️ 錯誤題目詳解：</span>
+            <div id="error-list"></div>
+        </div>
+
+        <div id="verify-code" class="gone"></div>
+    </div>
+
+<script>
+    let score = 0, round = 0, timer, timeLeft = 5;
+    let requiredAns = [], userSelected = [];
+    let questionPool = [];
+    let errorStats = {}; 
+    let canClick = false; 
+    let isFinished = false;
+    let audioCtx, heartbeatTimer;
+    const FE0E = "\uFE0E";
+
+    const comboList = [
+        { id: 0, r:true, l3:"", l4:"", ans:["停止"] },
+        { id: 1, r:false, l3:"", l4:"●", ans:["左轉","直行","右轉"] },
+        { id: 2, r:true, l3:"⬅" + FE0E, l4:"", ans:["左轉"] },
+        { id: 3, r:true, l3:"", l4:"⮕" + FE0E, ans:["右轉"] },
+        { id: 4, r:false, l3:"", l4:"⬆" + FE0E, ans:["直行"] },
+        { id: 5, r:false, l3:"⬆" + FE0E, l4:"⮕" + FE0E, ans:["直行","右轉"] },
+        { id: 6, r:false, l3:"⬅" + FE0E, l4:"⬆" + FE0E, ans:["左轉","直行"] },
+        { id: 7, r:false, l3:"⬅" + FE0E, l4:"●", ans:["左轉","直行","右轉"] },
+        { id: 8, r:false, l3:"⬅" + FE0E, l4:"⮕" + FE0E, ans:["左轉","右轉"] },
+        { id: 9, r:false, l3:"⬅" + FE0E, l4:"", ans:["左轉"] },
+        { id: 10, r:false, l3:"", l4:"⮕" + FE0E, ans:["右轉"] }
+    ];
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playTone(freq, duration) {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime); 
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function speak(type) {
+        const msg = new SpeechSynthesisUtterance();
+        let textPool = type === 'correct' 
+            ? ["正確", "你好棒喔", "太厲害了", "完全正確", "很厲害", "好棒棒", "賓果"] 
+            : ["看錯囉", "再接再厲", "喔喔答錯了", "沒關係下一題", "眼睛看清楚喔", "喔喔", "甘巴爹"];
+        msg.text = textPool[Math.floor(Math.random() * textPool.length)];
+        msg.lang = 'zh-TW';
+        msg.volume = 0.5; 
+        window.speechSynthesis.speak(msg);
+    }
+
+    function handleStartClick() {
+        if (isFinished) { goHome(); } else { startGame(); }
+    }
+
+    function goHome() {
+        isFinished = false; round = 0; score = 0;
+        document.getElementById('hint').innerText = "準備好挑戰了嗎？";
+        document.getElementById('start-btn').innerText = "開始挑戰";
+        document.getElementById('stats-area').classList.add('gone');
+        document.getElementById('light-box').classList.add('gone');
+        document.getElementById('review-btn').classList.add('gone');
+        document.getElementById('result-analysis').classList.add('gone');
+        document.getElementById('controls').classList.add('gone');
+        document.getElementById('verify-code').classList.add('gone');
+    }
+
+    function startHeartbeat() {
+        if (heartbeatTimer) return;
+        heartbeatTimer = setInterval(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime); 
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }, 600);
+    }
+
+    function startGame() {
+        initAudio(); startHeartbeat();
+        score = 0; round = 0; errorStats = {};
+        questionPool = [...comboList].sort(() => Math.random() - 0.5);
+        document.getElementById('stats-area').classList.remove('gone');
+        document.getElementById('light-box').classList.remove('gone');
+        document.getElementById('start-btn').classList.add('gone');
+        document.getElementById('review-btn').classList.add('gone');
+        document.getElementById('result-analysis').classList.add('gone');
+        document.getElementById('controls').classList.remove('gone');
+        document.getElementById('verify-code').classList.add('gone');
+        updateStats(); nextRound();
+    }
+
+    function generateVerifyCode() {
+        const now = new Date();
+        const timePart = now.getTime().toString(36).toUpperCase().slice(-5);
+        const scorePart = (score * 10).toString().padStart(3, '0');
+        const randomPart = Math.random().toString(36).toUpperCase().substring(2, 5);
+        // 修改為純站名 + 代碼
+        return `<span class="cert-station">彰化監理站</span><br>${timePart}-${scorePart}-${randomPart}`;
+    }
+
+    function toggleAnalysis() {
+        document.getElementById('result-analysis').classList.toggle('gone');
+    }
+
+    function updateStats() {
+        document.getElementById('round-display').innerText = round > 0 ? `${round} / 10` : "- / 10";
+        document.getElementById('score-display').innerText = score * 10;
+    }
+
+    function nextRound() {
+        canClick = false; 
+        if (round >= 10) {
+            isFinished = true;
+            if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+            document.getElementById('hint').innerText = "挑戰結束！";
+            document.getElementById('start-btn').innerText = "重新挑戰";
+            document.getElementById('start-btn').classList.remove('gone');
+            document.getElementById('light-box').classList.add('gone');
+            document.getElementById('controls').classList.add('gone');
+            document.getElementById('review-btn').classList.remove('gone');
+            
+            const vCode = document.getElementById('verify-code');
+            vCode.innerHTML = generateVerifyCode();
+            vCode.classList.remove('gone');
+
+            showAnalysis(); return;
+        }
+        const q = questionPool[round++];
+        timeLeft = 5; userSelected = [];
+        updateStats();
+        
+        ["L-red", "L-yellow", "L-3", "L-4"].forEach(id => {
+            const el = document.getElementById(id);
+            el.className = "light " + (id.includes("red") ? "red" : "green");
+            el.innerText = "";
+        });
+        document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('correct-part'));
+        
+        setTimeout(() => {
+            requiredAns = q.ans;
+            if(q.r) document.getElementById('L-red').classList.add('active');
+            [ {id:"L-3", val:q.l3}, {id:"L-4", val:q.l4} ].forEach(item => {
+                const el = document.getElementById(item.id);
+                if(item.val) {
+                    el.innerText = item.val;
+                    if(item.val === "●") el.classList.add('active-dot');
+                    else el.classList.add('active-arrow');
+                }
+            });
+            canClick = true; 
+            startTimer();
+        }, 150); 
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        const timerCountEl = document.getElementById('timer-count');
+        document.getElementById('hint').innerText = "請作答";
+        timerCountEl.innerText = timeLeft;
+        timerCountEl.classList.remove('urgent');
+
+        timer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 3 && timeLeft >= 0) {
+                timerCountEl.classList.add('urgent');
+                playTone(1200, 0.05); 
+            }
+            if (timeLeft < 0) {
+                clearInterval(timer);
+                canClick = false;
+                errorStats[questionPool[round-1].id] = (errorStats[questionPool[round-1].id] || 0) + 1;
+                playTone(180, 0.3); speak('wrong'); 
+                document.getElementById('hint').innerText = "時間到！";
+                setTimeout(nextRound, 1000);
+            } else { timerCountEl.innerText = timeLeft; }
+        }, 1000);
+    }
+
+    function check(input) {
+        if (!canClick || timeLeft < 0) return; 
+        const q = questionPool[round-1];
+        if (!requiredAns.includes(input)) {
+            clearInterval(timer); canClick = false;
+            errorStats[q.id] = (errorStats[q.id] || 0) + 1;
+            playTone(180, 0.3); speak('wrong'); 
+            document.getElementById('hint').innerText = "選錯了！";
+            setTimeout(nextRound, 1000); return;
+        }
+        if (userSelected.includes(input)) return;
+        userSelected.push(input);
+        document.getElementById('btn-' + input).classList.add('correct-part');
+        playTone(900, 0.08); 
+        if (userSelected.length === requiredAns.length) {
+            clearInterval(timer); canClick = false; score++; updateStats();
+            playTone(880, 0.1); speak('correct'); 
+            document.getElementById('hint').innerText = "正確！";
+            setTimeout(nextRound, 1000);
+        }
+    }
+
+    function showAnalysis() {
+        const listEl = document.getElementById('error-list');
+        listEl.innerHTML = "";
+        const errorEntries = Object.entries(errorStats);
+        if (errorEntries.length === 0) {
+            listEl.innerHTML = "<div style='color:#34d399; font-weight:bold;'>完美！</div>";
+        } else {
+            errorEntries.forEach(([qid, count]) => {
+                const q = comboList[qid];
+                listEl.innerHTML += `
+                    <div class="error-entry">
+                        ${generateMiniLight(q)}
+                        <div class="error-info">
+                            <span style="font-size:11px;color:#94a3b8">錯誤 ${count} 次</span>
+                            <span class="ans-tag">✔ 正確：${q.ans.join(', ')}</span>
+                        </div>
+                    </div>`;
+            });
+        }
+    }
+
+    function generateMiniLight(q) {
+        const rStyle = q.r ? "background:#ef4444;" : "";
+        const l3Style = q.l3 === "●" ? "background:#22c55e;" : (q.l3 ? "color:#22c55e;" : "");
+        const l3Content = q.l3 === "●" ? "" : (q.l3 || "");
+        const l4Style = q.l4 === "●" ? "background:#22c55e;" : (q.l4 ? "color:#22c55e;" : "");
+        const l4Content = q.l4 === "●" ? "" : (q.l4 || "");
+
+        return `<div class="mini-light-bar">
+            <div class="mini-light" style="${rStyle}"></div>
+            <div class="mini-light"></div>
+            <div class="mini-light" style="${l3Style}">${l3Content}</div>
+            <div class="mini-light" style="${l4Style}">${l4Content}</div>
+        </div>`;
+    }
+</script>
+</body>
+</html>
