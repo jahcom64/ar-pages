@@ -107,7 +107,7 @@
         </div>
 
         <div id="hint" class="hint-text">準備好挑戰了嗎？</div>
-        
+        <div id="hint2" class="hint-text"></div>
         <div id="light-box" class="light-bar gone">
             <div id="L-red" class="light red"></div>
             <div id="L-yellow" class="light yellow"></div>
@@ -193,6 +193,7 @@
     function goHome() {
         isFinished = false; round = 0; score = 0;
         document.getElementById('hint').innerText = "準備好挑戰了嗎？";
+        document.getElementById('hint2').innerText = "";
         document.getElementById('start-btn').innerText = "開始挑戰";
         document.getElementById('stats-area').classList.add('gone');
         document.getElementById('light-box').classList.add('gone');
@@ -253,6 +254,7 @@
             isFinished = true;
             if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
             document.getElementById('hint').innerText = "挑戰結束！";
+            document.getElementById('hint2').innerText = "截圖100分參加抽獎活動";
             document.getElementById('start-btn').innerText = "重新挑戰";
             document.getElementById('start-btn').classList.remove('gone');
             document.getElementById('light-box').classList.add('gone');
@@ -377,4 +379,5 @@
 </body>
 
 </html>
+
 
