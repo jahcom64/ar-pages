@@ -78,11 +78,12 @@
 
     /* 響應式佈局 */
     @media (max-width: 900px) {
-      .game-card { flex: 1 1 calc(50% - 25px); max-width: calc(50% - 25px); }
+      .game-card { flex: 1 1 calc(50% - 25px); max-width: calc(50% - 25px); min-width: 200px; /* 縮小最小寬度限制 */}
       .header-title { font-size: 24px; }
     }
     @media (max-width: 600px) {
-      .game-card { flex: 1 1 100%; max-width: 100%; }
+      .game-grid { gap: 15px; /* 手機版間距縮小一點比較好看 */  }
+      .game-card { flex: 1 1 100%; max-width: 100%; min-width: 0; /* 重要：解除最小寬度限制，防止溢出螢幕 */}
       .header-title { font-size: 20px; padding: 20px 0 5px 0; }
     }
 
