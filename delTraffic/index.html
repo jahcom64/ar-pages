@@ -1,0 +1,614 @@
+﻿<!DOCTYPE html> 
+<html> 
+<head> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+    <title>彰化監理站：交安號誌消消樂</title> 
+    <style> 
+        :root {  
+            --grid-max-width: 400px; 
+            --grid-size: min(92vw, var(--grid-max-width));  
+            --cell-size: calc((var(--grid-size) - 16px - (7 * 4px)) / 8);  
+        } 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; } 
+
+        body { background: #ffffff; color: #333; text-align: center; font-family: "Microsoft JhengHei", sans-serif; margin: 0; padding: 10px; transition: background 0.1s; } 
+         
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            width: var(--grid-size); 
+            margin: 0 auto; 
+            font-weight: bold; 
+            align-items: center; 
+            height: 40px;
+        } 
+
+        #timer-text { flex: 1; text-align: center; font-size: 0.9em; color: #555; }
+
+        #audio-control { 
+            cursor: pointer; font-size: 18px; background: #eee; border-radius: 50%; 
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        #visitor-count { font-size: 14px; color: #666; margin-top: 5px; font-weight: normal; }
+        #visitor-num { color: #d63031; font-weight: bold; }
+
+        #timer-bar { width: var(--grid-size); height: 10px; background: #eee; margin: 10px auto; border-radius: 5px; border: 1px solid #ddd; overflow: hidden; } 
+        #timer-fill { width: 100%; height: 100%; background: #28a745; transition: width 1s linear; } 
+        #timer-fill.warning { background-color: #d63031; } 
+
+        #game-grid {  
+            display: grid; grid-template-columns: repeat(8, var(--cell-size)); grid-template-rows: repeat(8, var(--cell-size)); 
+            gap: 4px; margin: 0 auto; width: var(--grid-size); background: #f8f8f8; padding: 8px; border-radius: 12px; border: 2px solid #eee; justify-content: center; 
+            transform: translateZ(0); touch-action: none; position: relative;
+        } 
+        .gem {  
+            width: var(--cell-size); height: var(--cell-size); line-height: var(--cell-size); font-size: calc(var(--cell-size) * 0.65); 
+            background: #fff; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.15s ease-out, opacity 0.2s; position: relative; border: 2px solid transparent;
+            user-select: none;
+        } 
+
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 3000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; cursor: pointer;
+        }
+        .hand-animation {
+            font-size: 60px;
+            animation: swipe-hand 2s infinite;
+            position: relative;
+        }
+        @keyframes swipe-hand {
+            0% { transform: translate(0, 0); opacity: 0; }
+            20% { opacity: 1; }
+            50% { transform: translate(calc(var(--cell-size) * 1.5), 0); }
+            80% { opacity: 1; }
+            100% { transform: translate(calc(var(--cell-size) * 1.5), 0); opacity: 0; }
+        }
+        .tutorial-msg { font-size: 1.2em; font-weight: bold; margin-top: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        .hint-active { z-index: 5; animation: marquee-border 0.6s linear infinite alternate; box-shadow: 0 0 10px #3498db; }
+        @keyframes marquee-border { from { border-color: #3498db; box-shadow: 0 0 5px #3498db; } to { border-color: #f1c40f; box-shadow: 0 0 15px #f1c40f; } }
+
+        .gem.selected { border: 3px solid #007bff; background: #e7f1ff; transform: scale(1.1); z-index: 10; } 
+        .gem.bomb-active { border: 3px solid #ff4757 !important; animation: shake 0.15s infinite; z-index: 15; } 
+        @keyframes shake { 0% { transform: translate(-1.1px); } 100% { transform: translate(1.1px); } } 
+
+        .gem.bomb { background: #333 !important; color: white !important; font-size: calc(var(--cell-size) * 0.7); animation: pulse 0.5s infinite alternate; } 
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } } 
+
+        .shake-screen { animation: screen-shake 0.3s; }
+        @keyframes screen-shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(5px, 5px); } 50% { transform: translate(-5px, -5px); } 75% { transform: translate(5px, -5px); } }
+        .flash-white { background-color: #f1f1f1 !important; }
+        
+        #big-score-popup {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 80px; font-weight: 900; color: #ff4757; text-shadow: 3px 3px 0px #fff;
+            pointer-events: none; z-index: 1000; opacity: 0; transition: 0.3s;
+        }
+
+        #info-container { width: var(--grid-size); margin: 20px auto; display: flex; flex-direction: column; gap: 8px; } 
+        .info-card { background: #ffffff; border-left: 5px solid #007bff; padding: 10px; border-radius: 8px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); animation: popIn 0.3s ease-out; text-align: left; } 
+        .info-card.tutorial { border-left-color: #28a745; background: #f0fff4; } 
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } } 
+        .info-icon { font-size: 24px; margin-right: 12px; } 
+        .info-title { font-weight: bold; color: #0056b3; margin: 0; font-size: 0.95em; } 
+        .info-desc { margin: 2px 0 0 0; font-size: 0.8em; color: #444; line-height: 1.3; } 
+
+        .game-over { position: fixed; top:0; left:0; width:100%; height:100%; background:white; display:none; flex-direction:column; z-index:2000; padding: 20px; overflow-y: auto; } 
+        .btn-restart { margin: 15px auto; padding: 12px 35px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; cursor: pointer; width: fit-content; } 
+         
+        #upload-section { margin: 20px auto; width: 100%; max-width: 320px; background: #f0f7ff; padding: 15px; border-radius: 12px; border: 2px solid #007bff; } 
+        #player-name-input { width: 80%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; text-align: center; font-size: 1em; } 
+        .btn-upload { background: #28a745; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; } 
+        #leaderboard { margin: 20px auto; width: 100%; max-width: 320px; background: #fffbe6; padding: 15px; border-radius: 12px; border: 1px solid #ffe58f; } 
+        
+        .footer-version { margin-top: 20px; font-size: 12px; color: #999; padding-bottom: 10px; }
+    </style> 
+</head> 
+<body> 
+
+    <div id="start-overlay" onclick="closeTutorial()">
+        <div class="hand-animation">👆</div>
+        <div class="tutorial-msg">滑動或點擊來消除標誌</div>
+        <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">(點擊畫面開始挑戰)</div>
+    </div>
+
+    <div class="header">
+        <div style="flex-shrink: 0;">得分: <span id="score">0</span></div>
+        <div id="timer-text">請點擊下方標誌開始</div>
+        <div id="audio-control" onclick="toggleMute()">🔊</div>
+    </div> 
+
+    <div id="visitor-count">🔥 已有 <span id="visitor-num">載入中...</span> 位勇士守護彰化交通</div>
+
+    <div id="timer-bar"><div id="timer-fill"></div></div> 
+    <div id="game-grid">
+        <div id="big-score-popup">+500</div>
+    </div> 
+    <div id="info-container"></div> 
+
+    <div class="footer-version">彰化監理站＠交安號誌消消樂</div>
+
+    <div id="game-over-screen" class="game-over"> 
+        <h1 style="color: #d63031; margin-bottom: 10px;">🏁 遊戲結束</h1> 
+        <div style="font-size: 1.3em; font-weight: bold; background: #f8f9fa; padding: 5px 20px; border-radius: 20px; display: inline-block;">總得分：<span id="final-score">0</span></div> 
+        <div id="upload-section">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #0056b3;">🏆 傳送成績至雲端</p>
+            <input type="text" id="player-name-input" placeholder="請輸入姓名">
+            <br>
+            <button class="btn-upload" onclick="handleCloudUpload()">確認送出</button>
+        </div>
+        <div id="cloud-msg" style="margin-top: 10px; font-weight: bold;"></div>
+        <div id="leaderboard">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #856404;">🌟 全球前五名排行</p>
+            <div id="leaderboard-list" style="font-size: 0.9em; line-height: 1.8;">載入中...</div>
+        </div>
+        <p style="margin-top: 15px; font-weight: bold;">掌握的交通重點：</p> 
+        <div id="result-summary" style="display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 400px; margin: 15px auto; width: 100%;"></div> 
+        <button class="btn-restart" onclick="resetGame()">重新挑戰</button> 
+    </div> 
+
+    <script> 
+        const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdoFVdmLEfgohLygIY3IDPEeX_q8qWu2VPoJt6jhf6fwnePlg/formResponse";
+        const ENTRY_NAME = "entry.1376867263";  
+        const ENTRY_SCORE = "entry.307930419"; 
+        const ENTRY_TOKEN = "entry.704897574"; 
+        const SECRET_TOKEN = "CHANG_LU_2026"; 
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSejv4JEWlxJqFvGtJRy7HA9VW4QmtIXxvL7Bk94XS5zznv4KtKBUCIeAXo6ABiUENq393ISA9NWamV/pub?output=csv"; 
+
+        const size = 8; 
+        const allSymbols = ['🚗', '🚲', '🚶', '🛑', '⚠️', '🚥', '🚑', '⛽', '📱', '⛔', '🚷', '帶有計程車的幸福卡標誌需用emoji代換', '🚕']; // 保持陣列一致性
+        const infoData = { 
+            '🚗': { title: '汽車安全', desc: '路口轉向注意內輪差，確實禮讓行人優先通行。' }, 
+            '🚲': { title: '自行車規範', desc: '騎乘請佩戴安全帽，不逆向、不闖紅燈。' }, 
+            '🚶': { title: '行人優先', desc: '穿越馬路請走斑馬線，專心走路不滑手機。' }, 
+            '🛑': { title: '停讓標誌', desc: '看到「停」標誌，車輛必須完全停穩後再開。' }, 
+            '⚠️': { title: '警告標誌', desc: '注意前方道路特殊狀況，請減速慢行注意安全。' }, 
+            '🚥': { title: '號誌遵守', desc: '嚴格遵守紅燈停、綠燈行，不搶快過馬路。' },
+            '🚑': { title: '避讓緊急車輛', desc: '聞救護車警鳴聲，請依規定向兩側避讓，優先禮讓救護車通行。' }, 
+            '⛽': { title: '加油站安全', desc: '進入加油站應熄火並禁菸，留意進出車輛動向。' }, 
+            '📱': { title: '禁滑手機', desc: '駕駛時禁止手持操作手機，守護自身與他人安全。' }, 
+            '⛔': { title: '禁入標誌', desc: '此路段禁止任何車輛進入，請依循導引行駛。' }, 
+            '🚷': { title: '行人禁行', desc: '此區段禁止行人通行，請改走安全的人行空間。' }, 
+            '🚕': { title: '幸福卡優惠', desc: '彰化長青幸福卡搭乘計程車，單趟補助 85 元。' }
+        }; 
+
+        let grid = [], currentSymbols = [], score = 0, timeLeft = 60;
+        let isGameOver = false, isStarted = false, isProcessing = false, isMuted = false; 
+        let selectedGem = null, activeBomb = null, masteredSymbols = new Set(), timerInterval, hintTimeout; 
+        let startX, startY, comboCount = 0;
+
+        let audioCtx, bgmInterval, bgmGainNode;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                bgmGainNode = audioCtx.createGain();
+                bgmGainNode.connect(audioCtx.destination);
+                bgmGainNode.gain.setValueAtTime(0.4, audioCtx.currentTime); 
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playInternalSFX(type) {
+            if (isMuted || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const sfxGain = audioCtx.createGain();
+            osc.connect(sfxGain);
+            sfxGain.connect(audioCtx.destination);
+            let duration = 0.1;
+            switch(type) {
+                case 'match': 
+                    const freq = 440 * Math.pow(1.059, comboCount);
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    sfxGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    break;
+                case 'explode': 
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(110, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+                    sfxGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                    duration = 0.4;
+                    break;
+                case 'slide': 
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.05);
+                    sfxGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    duration = 0.05;
+                    break;
+            }
+            osc.start();
+            sfxGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playInternalBGM() {
+            if (!audioCtx || bgmInterval) return;
+            const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63]; 
+            let noteIndex = 0;
+            bgmInterval = setInterval(() => {
+                if (isMuted || isGameOver) return;
+                const osc = audioCtx.createOscillator();
+                const noteGain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(melody[noteIndex], audioCtx.currentTime);
+                noteGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                osc.connect(noteGain);
+                noteGain.connect(bgmGainNode);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+                noteIndex = (noteIndex + 1) % melody.length;
+            }, 500);
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            if (bgmGainNode) bgmGainNode.gain.setValueAtTime(isMuted ? 0 : 0.4, audioCtx.currentTime);
+            document.getElementById('audio-control').innerText = isMuted ? '🔇' : '🔊';
+        }
+
+        function closeTutorial() {
+            document.getElementById('start-overlay').style.display = 'none';
+            initAudio();
+        }
+
+        function init() { 
+            // 核心狀態重置
+            isGameOver = false; isStarted = false; isProcessing = false; score = 0; timeLeft = 60;
+            masteredSymbols.clear(); activeBomb = null; selectedGem = null; comboCount = 0;
+            currentSymbols = ['🚗', '🚲', '🚶', '🛑', '⚠️', '🚥', '🚑', '⛽', '📱', '⛔', '🚷', '🚕'].sort(() => Math.random() - 0.5).slice(0, 6);
+
+            // UI 重置
+            document.getElementById('score').innerText = '0'; 
+            document.getElementById('timer-text').innerText = '請點擊下方標誌開始';
+            document.getElementById('timer-fill').style.width = '100%';
+            document.getElementById('timer-fill').classList.remove('warning');
+            document.getElementById('game-over-screen').style.display = 'none'; 
+            document.getElementById('cloud-msg').innerText = '';
+            document.getElementById('player-name-input').value = '';
+            
+            const infoContainer = document.getElementById('info-container');
+            infoContainer.innerHTML = '';
+            showTutorial(); 
+            fetchLeaderboard();
+
+            const gridEl = document.getElementById('game-grid');
+            const popup = document.getElementById('big-score-popup');
+            gridEl.innerHTML = ''; 
+            gridEl.appendChild(popup);
+
+            // 生成網格
+            for (let r = 0; r < size; r++) { 
+                grid[r] = []; 
+                for (let c = 0; c < size; c++) { 
+                    let sym; 
+                    do { sym = currentSymbols[Math.floor(Math.random() * currentSymbols.length)]; }  
+                    while ((c > 1 && sym === grid[r][c-1] && sym === grid[r][c-2]) || (r > 1 && sym === grid[r-1][c] && sym === grid[r-2][c])); 
+                    grid[r][c] = sym; 
+                    const div = document.createElement('div'); 
+                    div.className = 'gem'; div.id = `gem-${r}-${c}`; div.innerText = sym; 
+
+                    div.addEventListener('pointerdown', (e) => { 
+                        if(isProcessing && !activeBomb) return; 
+                        startX = e.clientX; startY = e.clientY; 
+                        handleSelect(r, c); 
+                    });
+
+                    div.addEventListener('pointerup', (e) => {
+                        if (!selectedGem || isProcessing || activeBomb) return;
+                        const dx = e.clientX - startX, dy = e.clientY - startY;
+                        if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+                            let tr = r, tc = c;
+                            if (Math.abs(dx) > Math.abs(dy)) tc = dx > 0 ? c + 1 : c - 1;
+                            else tr = dy > 0 ? r + 1 : r - 1;
+                            if (tr >= 0 && tr < size && tc >= 0 && tc < size) handleSelect(tr, tc);
+                        }
+                    });
+                    gridEl.appendChild(div); 
+                } 
+            }
+            if (!checkMoves()) shuffleUntilMovable();
+            setTimeout(() => { uploadToCloud("訪客紀錄", 0, true); }, 3000);
+        } 
+
+        function handleSelect(r, c) { 
+            if (isGameOver) return; 
+            if (!isStarted) { 
+                isStarted = true; 
+                initAudio();
+                playInternalBGM();
+                startTimer(); 
+                closeTutorial();
+            }
+            resetHintTimer(); 
+            const currentDiv = document.getElementById(`gem-${r}-${c}`); 
+
+            if (activeBomb) { 
+                if (activeBomb.r === r && activeBomb.c === c) {
+                    currentDiv.classList.remove('bomb-active');
+                    activeBomb = null; return;
+                }
+                isProcessing = true;
+                const isDoubleBomb = (grid[r][c] === '💣');
+                grid[activeBomb.r][activeBomb.c] = null; 
+                const oldBombDiv = document.getElementById(`gem-${activeBomb.r}-${activeBomb.c}`);
+                if(oldBombDiv) oldBombDiv.classList.remove('bomb-active');
+                activeBomb = null; 
+                explode(r, c, isDoubleBomb); 
+                return; 
+            } 
+
+            if (isProcessing) return;
+            if (grid[r][c] === '💣') { 
+                if (selectedGem) selectedGem.div.classList.remove('selected'); 
+                selectedGem = null; activeBomb = { r, c }; 
+                currentDiv.classList.add('bomb-active'); return; 
+            } 
+
+            if (!selectedGem) { 
+                selectedGem = { r, c, div: currentDiv }; 
+                currentDiv.classList.add('selected'); 
+            } else { 
+                const dr = Math.abs(r - selectedGem.r), dc = Math.abs(c - selectedGem.c); 
+                if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) { 
+                    isProcessing = true;
+                    document.getElementById('info-container').innerHTML = ''; 
+                    playInternalSFX('slide');
+                    processSwap(selectedGem.r, selectedGem.c, r, c); 
+                } 
+                if(selectedGem) selectedGem.div.classList.remove('selected'); 
+                selectedGem = null; 
+            } 
+        } 
+
+        async function processSwap(r1, c1, r2, c2) { 
+            swapData(r1, c1, r2, c2); render(); 
+            await new Promise(r => setTimeout(r, 200)); 
+            if (findMatches().length > 0) { comboCount = 0; await handleMatches(); }  
+            else { swapData(r1, c1, r2, c2); render(); } 
+            isProcessing = false; 
+            if (!checkMoves()) shuffleUntilMovable();
+            resetHintTimer(); 
+        } 
+
+        function swapData(r1, c1, r2, c2) { const temp = grid[r1][c1]; grid[r1][c1] = grid[r2][c2]; grid[r2][c2] = temp; } 
+
+        function findMatches() { 
+            let matches = []; 
+            for (let r = 0; r < size; r++) { 
+                for (let c = 0; c < size - 2; c++) { 
+                    if (grid[r][c] && grid[r][c] !== '💣' && grid[r][c] === grid[r][c+1] && grid[r][c] === grid[r][c+2]) { 
+                        let group = [{r,c}, {r,c:c+1}, {r,c:c+2}]; 
+                        let k = c+3; while(k < size && grid[r][k] === grid[r][c]) { group.push({r,c:k}); k++; } 
+                        matches.push(group); c = k - 1; 
+                    } 
+                } 
+            } 
+            for (let c = 0; c < size; c++) { 
+                for (let r = 0; r < size - 2; r++) { 
+                    if (grid[r][c] && grid[r][c] !== '💣' && grid[r][c] === grid[r+1][c] && grid[r][c] === grid[r+2][c]) { 
+                        let group = [{r,c}, {r:r+1,c}, {r:r+2,c}]; 
+                        let k = r+3; while(k < size && grid[k][c] === grid[r][c]) { group.push({r:k,c}); k++; } 
+                        matches.push(group); r = k - 1; 
+                    } 
+                } 
+            } 
+            return matches; 
+        } 
+
+        async function handleMatches() { 
+            let groups = findMatches(); if (groups.length === 0) return; 
+            playInternalSFX('match');
+            comboCount++; 
+            let allMatchPos = new Set(); 
+            let bombCreationPos = null;
+            groups.forEach(group => { 
+                let sym = grid[group[0].r][group[0].c]; 
+                masteredSymbols.add(sym); showUniqueInfoCard(sym, 'info-container'); 
+                if (group.length >= 5) {
+                    let center = group[Math.floor(group.length/2)];
+                    bombCreationPos = center;
+                }
+                group.forEach(p => allMatchPos.add(`${p.r},${p.c}`));
+            }); 
+            if (!bombCreationPos && groups.length > 1) {
+                for(let i=0; i<groups.length; i++) {
+                    for(let j=i+1; j<groups.length; j++) {
+                        for(let p1 of groups[i]) {
+                            for(let p2 of groups[j]) {
+                                if(p1.r === p2.r && p1.c === p2.c) bombCreationPos = p1; 
+                            }
+                        }
+                    }
+                }
+            }
+            score += allMatchPos.size * 10;
+            if(bombCreationPos) score += 50; 
+            document.getElementById('score').innerText = score; 
+            allMatchPos.forEach(posStr => {
+                let [r, c] = posStr.split(',').map(Number);
+                grid[r][c] = null;
+            });
+            if (bombCreationPos) grid[bombCreationPos.r][bombCreationPos.c] = '💣';
+            render(); 
+            await new Promise(res => setTimeout(res, 250)); 
+            drop(); render(); 
+            await handleMatches(); 
+        } 
+
+        function explode(r, c, isDouble) { 
+            playInternalSFX('explode');
+            document.body.classList.add('flash-white');
+            document.getElementById('game-grid').classList.add('shake-screen');
+            let chainReaction = isDouble; 
+            for(let i=r-1; i<=r+1; i++) { 
+                for(let j=c-1; j<=c+1; j++) { 
+                    if(i>=0 && i<size && j>=0 && j<size && grid[i][j]) { 
+                        if(grid[i][j] === '💣') chainReaction = true; 
+                        else score += 10; 
+                        grid[i][j] = null; 
+                    } 
+                } 
+            } 
+            if (chainReaction) {
+                score += 500; 
+                const popup = document.getElementById('big-score-popup');
+                popup.style.opacity = '1';
+                popup.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                setTimeout(() => {
+                    popup.style.opacity = '0';
+                    popup.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                }, 500);
+            }
+            document.getElementById('score').innerText = score; render(); 
+            setTimeout(async () => { 
+                document.body.classList.remove('flash-white');
+                document.getElementById('game-grid').classList.remove('shake-screen');
+                drop(); render(); await handleMatches(); isProcessing = false; 
+                if (!checkMoves()) shuffleUntilMovable();
+            }, 500); 
+        } 
+
+        function checkMoves() {
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (grid[r][c] === '💣') return true; 
+                    const neighbors = [{r:r+1, c}, {r, c:c+1}];
+                    for (let n of neighbors) {
+                        if (n.r < size && n.c < size) {
+                            swapData(r, c, n.r, n.c);
+                            let m = findMatches();
+                            swapData(r, c, n.r, n.c);
+                            if (m.length > 0) return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function shuffleUntilMovable() {
+            if(isGameOver) return;
+            let flat = grid.flat().filter(s => s && s !== '💣');
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    grid[r][c] = flat[Math.floor(Math.random() * flat.length)];
+                }
+            }
+            if (!checkMoves()) shuffleUntilMovable();
+            else render();
+        }
+
+        function showUniqueInfoCard(sym, targetId) { 
+            const container = document.getElementById(targetId); 
+            if (!infoData[sym] || container.querySelector(`[data-sym="${sym}"]`)) return; 
+            const card = document.createElement('div'); card.className = 'info-card'; card.setAttribute('data-sym', sym); 
+            card.innerHTML = `<div class="info-icon">${sym}</div><div class="info-text"><p class="info-title">${infoData[sym].title}</p><p class="info-desc">${infoData[sym].desc}</p></div>`; 
+            container.prepend(card); 
+        } 
+
+        function resetHintTimer() { clearTimeout(hintTimeout); document.querySelectorAll('.gem').forEach(el => el.classList.remove('hint-active')); if (!isGameOver && isStarted) { hintTimeout = setTimeout(showHint, 3000); } }
+
+        function showHint() {
+            if (isGameOver || isProcessing) return;
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const adj = [{r:r+1, c}, {r, c:c+1}];
+                    for (let a of adj) {
+                        if (a.r < size && a.c < size) {
+                            swapData(r, c, a.r, a.c);
+                            if (findMatches().length > 0) { 
+                                swapData(r, c, a.r, a.c); 
+                                document.getElementById(`gem-${r}-${c}`).classList.add('hint-active'); 
+                                document.getElementById(`gem-${a.r}-${a.c}`).classList.add('hint-active'); return; 
+                            }
+                            swapData(r, c, a.r, a.c);
+                        }
+                    }
+                }
+            }
+        }
+
+        function showTutorial() { 
+            const container = document.getElementById('info-container'); 
+            container.innerHTML = ` 
+                <div class="info-card tutorial"><div class="info-icon">🎮</div><div class="info-text"><p class="info-title">遊戲規則</p><p class="info-desc">3個連線得分。滑動或點擊皆可，3 秒沒動作會有流光提醒。</p></div></div> 
+                <div class="info-card tutorial"><div class="info-icon">💣</div><div class="info-text"><p class="info-title">遙控炸彈</p><p class="info-desc">消除 5 個以上獲得炸彈！點擊炸彈後，可點地圖任何一處引爆 9 宮格！</p></div></div> 
+            `; 
+        } 
+
+        function drop() { for (let c = 0; c < size; c++) { let empty = 0; for (let r = size - 1; r >= 0; r--) { if (grid[r][c] === null) empty++; else if (empty > 0) { grid[r + empty][c] = grid[r][c]; grid[r][c] = null; } } for (let i = 0; i < empty; i++) grid[i][c] = currentSymbols[Math.floor(Math.random() * currentSymbols.length)]; } } 
+
+        function render() { for (let r = 0; r < size; r++) { for (let c = 0; c < size; c++) { const div = document.getElementById(`gem-${r}-${c}`); if(!div) continue; div.innerText = grid[r][c] || ''; div.className = 'gem' + (grid[r][c] === '💣' ? ' bomb' : ''); if (activeBomb && activeBomb.r === r && activeBomb.c === c) div.classList.add('bomb-active'); else div.classList.remove('bomb-active'); div.style.opacity = grid[r][c] ? "1" : "0"; } } } 
+
+        function startTimer() { clearInterval(timerInterval); timerInterval = setInterval(() => { if (isGameOver) return; timeLeft--; document.getElementById('timer-text').innerText = `剩餘 ${timeLeft}s`; const fill = document.getElementById('timer-fill'); fill.style.width = (timeLeft / 60 * 100) + '%'; if (timeLeft <= 10) fill.classList.add('warning'); if (timeLeft <= 0) endGame(); }, 1000); } 
+
+        function endGame() { 
+            isGameOver = true; isProcessing = false; clearInterval(timerInterval); clearTimeout(hintTimeout); 
+            document.getElementById('final-score').innerText = score; 
+            document.getElementById('upload-section').style.display = 'block'; 
+            fetchLeaderboard(); 
+            const summaryContainer = document.getElementById('result-summary'); 
+            summaryContainer.innerHTML = ''; 
+            masteredSymbols.forEach(sym => showUniqueInfoCard(sym, 'result-summary')); 
+            document.getElementById('game-over-screen').style.display = 'flex'; 
+        } 
+
+        async function fetchLeaderboard() { 
+            const listEl = document.getElementById('leaderboard-list'); 
+            const visitorEl = document.getElementById('visitor-num');
+            try { 
+                const response = await fetch(CSV_URL + "&cache=" + Math.random()); 
+                const data = await response.text(); 
+                const rows = data.split('\n').filter(r => r.trim()).slice(1); 
+                if(visitorEl) visitorEl.innerText = rows.length;
+                let scores = rows.map(row => { 
+                    const cols = row.split(','); 
+                    return { name: cols[1]?.trim() || "匿名", score: parseInt(cols[2]) }; 
+                }).filter(item => !isNaN(item.score) && !item.name.includes("訪客") && !item.name.includes("紀錄")); 
+                scores.sort((a, b) => b.score - a.score); 
+                const top5 = scores.slice(0, 5); 
+                if (top5.length === 0) { listEl.innerHTML = "尚無挑戰紀錄"; return; } 
+                listEl.innerHTML = top5.map((item, index) => `<div><b>${index + 1}.</b> ${item.name} - ${item.score}分</div>`).join(''); 
+            } catch (e) { listEl.innerHTML = "排行榜載入中..."; if(visitorEl) visitorEl.innerText = "統計中..."; } 
+        }
+
+        function handleCloudUpload() { const name = document.getElementById('player-name-input').value.trim(); if (!name) { alert("請輸入姓名！"); return; } uploadToCloud(name, score); document.getElementById('upload-section').style.display = 'none'; }
+
+        function uploadToCloud(name, finalScore, silent = false) { 
+            const statusEl = document.getElementById('cloud-msg'); 
+            const formData = new URLSearchParams();
+            formData.append(ENTRY_NAME, name);
+            formData.append(ENTRY_SCORE, finalScore);
+            formData.append(ENTRY_TOKEN, SECRET_TOKEN);
+            fetch(FORM_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData.toString()
+            }).then(() => {
+                if(!silent) {
+                    statusEl.innerHTML = `<span style="color: #28a745;">✅ 傳送成功！正在更新排行...</span>`; 
+                    setTimeout(() => { fetchLeaderboard(); statusEl.innerHTML = `<span style="color: #28a745;">✅ 排行榜已更新！</span>`; }, 2000); 
+                }
+            }).catch(err => {
+                if(!silent) statusEl.innerHTML = `<span style="color: red;">❌ 傳送失敗</span>`;
+            });
+        }
+
+        // 修改後的重新挑戰函數：直接調用 init，不重新載入頁面
+        function resetGame() { 
+            init(); 
+        }
+
+        window.onload = init;
+    </script> 
+</body> 
+</html>
